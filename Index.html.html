@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Perp Trading Calculator</title>
+  <style>
+    :root{
+      --bg:#0b1628;
+      --panel:#0f1f39;
+      --panel-2:#102544;
+      --text:#e7eefc;
+      --muted:#9fb3d9;
+      --accent:#2a66ff;
+      --accent-2:#39b17a;
+      --border:#334e7e;
+      --chip:#142a57;
+      --green:#39b17a;
+      --orange:#f6c062;
+      --purple:#7c5cff;
+      --purple-2:#6547ff;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: "Segoe UI", Roboto, system-ui, -apple-system, Arial, sans-serif;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      background: radial-gradient(1200px 800px at 20% -10%, #142b54 0%, transparent 60%),
+                  radial-gradient(1200px 800px at 120% 120%, #13305f 0%, transparent 50%),
+                  var(--bg);
+      color:var(--text);
+      padding:24px 16px 80px;
+      line-height:1.45;
+    }
+    .wrap{max-width:1120px;margin:0 auto}
+
+    /* Topbar */
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+    .brand{font-weight:800;letter-spacing:.2px}
+    .brand h1{margin:0;font-size:22px}
+    .brand .desc{color:var(--muted);font-size:13px;margin-top:4px}
+    .top-actions{display:flex;gap:10px}
+    .btn{
+      border:1px solid transparent; border-radius:12px; padding:10px 12px;
+      font-weight:750; letter-spacing:.2px; cursor:pointer;
+      transition: transform .04s, background .2s, border .2s, filter .2s, opacity .2s;
+      color:white;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn.primary{background:var(--accent)}
+    .btn.primary:hover{filter:brightness(1.05)}
+    .btn.success{background:var(--accent-2)}
+    .btn.success:hover{filter:brightness(1.05)}
+    .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+    .btn.archive{background:#1a2b52;border:1px solid #3b5aa1}
+    .btn.archive:hover{filter:brightness(1.07)}
+    .btn.edit{ background:#0b1e3a; border:1px solid #325a97; color:#cfe0ff }
+    .btn.tps{ background:#13204a; border:1px solid #3e3aa1; color:#cfcfff }
+    .btn.tps.active{ background:var(--purple); border-color:var(--purple-2); color:white }
+    .btn.close{ background:#102a22; border:1px solid #1f644e; color:#aef0d1 }
+
+    /* LIVE AREA */
+    .live-area{
+      margin:0 auto 18px;
+      position:sticky; top:0; z-index:20;
+      background: linear-gradient(180deg, rgba(13,26,49,.75) 0%, rgba(13,26,49,.35) 100%);
+      backdrop-filter: blur(4px);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:12px;
+    }
+    .live-head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; color:#bfe8d3; font-weight:800; letter-spacing:.2px; }
+    .live-dot{ width:12px; height:12px; border-radius:999px; background:var(--green); box-shadow:0 0 0 0 rgba(57,177,122,.5); animation: dotPulse 1.6s ease-in-out infinite; }
+    .live-head .title{font-size:13px; opacity:.9}
+    @keyframes dotPulse { 0%{ box-shadow:0 0 0 0 rgba(57,177,122,.55); transform:scale(1); opacity:1;} 50%{ box-shadow:0 0 0 8px rgba(57,177,122,0); transform:scale(0.95); opacity:.85;} 100%{ box-shadow:0 0 0 0 rgba(57,177,122,0); transform:scale(1); opacity:1;} }
+    .live-list{ display:grid; grid-template-columns:1fr; gap:10px; }
+    @media (min-width:900px){ .live-list{ grid-template-columns:1fr 1fr 1fr; } }
+    .live-card{ border:1px solid rgba(57,177,122,.45); background: linear-gradient(180deg, rgba(57,177,122,.12) 0%, rgba(57,177,122,.06) 100%); border-radius:18px; padding:12px; animation: breath 2.4s ease-in-out infinite; }
+    @keyframes breath{ 0%{ box-shadow:0 0 0 0 rgba(57,177,122,.2); } 50%{ box-shadow:0 0 24px 2px rgba(57,177,122,.25); } 100%{ box-shadow:0 0 0 0 rgba(57,177,122,.2); } }
+    .live-card-top{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; }
+    .live-id{ display:flex; align-items:center; gap:10px; font-weight:800; font-size:12px; color:#c9f1dd; }
+    .live-id .badge{padding:4px 10px; border-radius:999px; border:1px solid rgba(57,177,122,.4); background:rgba(57,177,122,.12)}
+    .live-kv{font-size:12px; color:#dff6eb}
+    .live-kv b{color:#b9e9cd}
+
+    /* MAIN GRID */
+    .shell{display:grid;grid-template-columns:1fr;gap:20px}
+    @media (min-width:1060px){ .shell{grid-template-columns: 520px 1fr;} }
+    .card{ background:linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%); border:1px solid var(--border); border-radius:14px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+    .card .inner{padding:20px}
+    label{display:block;font-weight:650;margin:14px 0 6px;color:var(--muted)}
+    input[type="number"], input[type="text"], select{
+      width:100%; padding:12px 12px; border-radius:10px; border:1px solid var(--border); outline:none; background:#0c1b34; color:#e7eefc; font-weight:600;
+    }
+    input::placeholder{color:#7f93ba}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+    .results{ background:#0c1b34; border:1px dashed var(--border); border-radius:12px; padding:14px; margin-top:14px; }
+    .kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+    .kpi .box{ background:#0e2041;border:1px solid var(--border);border-radius:10px;padding:10px;}
+    .kpi .title{font-size:12px;color:var(--muted);font-weight:800;margin-bottom:4px;letter-spacing:.2px}
+    .kpi .value{font-size:16px;font-weight:800}
+    .separator{height:1px;background:var(--border);margin:14px 0}
+    small.note{color:#8aa2cf}
+
+    /* History + Stats */
+    .hist-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px}
+    .hist-title{font-weight:800}
+    .hist-stats{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .stat{display:flex;gap:6px;align-items:center;background:#0b1e3a;border:1px solid var(--border);border-radius:999px;padding:6px 10px}
+    .stat .label{font-size:12px;color:#9fb3d9;font-weight:800}
+    .stat .value{font-size:13px;font-weight:900}
+    .sr{color:var(--orange)}
+    .pl.pos{color:#6ee7b7}
+    .pl.neg{color:#f7a6a3}
+    .pl.zero{color:#c8d3ea}
+    .fees{color:#dbe7ff}
+    .hist-controls{display:flex;gap:8px;align-items:center}
+
+    .hist-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;max-height:540px;overflow:auto}
+    .hist-item{ background:#0c1b34;border:1px solid var(--border);border-radius:10px;padding:12px;position:relative }
+    .hist-top{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:6px}
+    .pill{font-weight:800;font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:var(--chip)}
+    .muted{color:#9fb3d9;font-size:12px}
+    .labels b{color:#b9c8e8;font-weight:800}
+    .trash{ border:none;background:transparent;cursor:pointer;font-size:18px;line-height:1;color:#ffb3b1; padding:6px 8px; border-radius:8px;}
+    .trash:hover{background:rgba(217,83,79,.12);color:#ffd3d1}
+    .btn.view{ background:#0e2041;border:1px solid #3a5288; color:#cfe0ff; padding:8px 10px; border-radius:10px; font-weight:800; }
+
+    /* Modals (generic) */
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+    .modal.open{display:flex}
+    .modal-card{width:100%;max-width:640px;background:linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);border:1px solid var(--border);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+    .modal-card .inner{padding:18px}
+    .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
+    .btn.cancel{background:#6c757d}
+    .btn.cancel:hover{filter:brightness(1.05)}
+    .pnl{ font-weight:900; }
+    .pnl.pos{ color: #6ee7b7; }
+    .pnl.neg{ color: #f7a6a3; }
+
+    /* Archive */
+    .archive-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+    .archive-controls{display:flex;gap:10px;align-items:center}
+    .select{background:#0c1b34;border:1px solid var(--border);border-radius:10px;color:#e7eefc;padding:8px 10px;font-weight:700}
+    .month-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+    .m-btn{padding:10px;border-radius:10px;border:1px solid var(--border);background:#0c1b34;color:#e7eefc;font-weight:800;cursor:pointer}
+    .m-btn[disabled]{opacity:.35;cursor:not-allowed}
+    .m-btn.active{outline:2px solid var(--accent)}
+    .m-count{font-size:11px;color:#9fb3d9;margin-left:6px}
+    .archive-stats{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0}
+    .archive-list{max-height:520px;overflow:auto;display:flex;flex-direction:column;gap:10px}
+    .hint{color:#9fb3d9;font-size:12px;margin-top:6px}
+
+    /* Tiny toast */
+    .toast{position:fixed;bottom:20px;right:20px;background:#0e2041;border:1px solid var(--border);color:#e7eefc;border-radius:12px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.3);opacity:0;transform:translateY(8px);transition:all .25s}
+    .toast.show{opacity:1;transform:none}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <div class="brand">
+        <h1>Perp Trading Calculator</h1>
+        <div class="desc">Position size, Live tracking, TPs, History & Archive</div>
+      </div>
+      <div class="top-actions">
+        <button class="btn archive" id="openArchive">Archive</button>
+      </div>
+    </div>
+
+    <!-- LIVE SECTION -->
+    <div class="live-area">
+      <div class="live-head">
+        <div class="live-dot"></div>
+        <div class="title">Live</div>
+      </div>
+      <div class="live-list" id="liveList"></div>
+    </div>
+
+    <div class="shell">
+      <!-- LEFT: Calculator -->
+      <div class="card">
+        <div class="inner">
+          <p class="desc">Compute position size (BTC &amp; USDT), margin and leverage. Put a trade in <b>Live</b> or save it.</p>
+
+          <label for="wallet">Wallet amount (USDT)</label>
+          <input type="number" id="wallet" placeholder="e.g., 1000" step="any" />
+
+          <div class="row">
+            <div>
+              <label for="risk">Risk (% of wallet)</label>
+              <input type="number" id="risk" placeholder="e.g., 5" step="any" />
+            </div>
+            <div>
+              <label for="margin">Margin (% of wallet)</label>
+              <input type="number" id="margin" placeholder="e.g., 75" step="any" value="75"/>
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="entry">Entry price (USDT)</label>
+              <input type="number" id="entry" placeholder="e.g., 100000" step="any" />
+            </div>
+            <div>
+              <label for="stop">Stop loss (USDT)</label>
+              <input type="number" id="stop" placeholder="e.g., 99000" step="any" />
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn primary" id="calcBtn">Calculate</button>
+            <button class="btn success" id="liveBtn" hidden>Live</button>
+            <button class="btn success" id="saveBtn" hidden>Save Calculation</button>
+            <button class="btn ghost" id="clearBtn">Clear all</button>
+          </div>
+
+          <div class="results" id="results" hidden>
+            <div class="kpi">
+              <div class="box">
+                <div class="title">Risk amount</div>
+                <div class="value"><span id="riskUSDT">-</span> USDT</div>
+              </div>
+              <div class="box">
+                <div class="title">Used margin</div>
+                <div class="value"><span id="marginUSDT">-</span> USDT</div>
+              </div>
+            </div>
+            <div class="kpi">
+              <div class="box">
+                <div class="title">Position size</div>
+                <div class="value">
+                  <span id="posBTC">-</span> BTC &nbsp; • &nbsp; <span id="posUSDT">-</span> USDT
+                </div>
+              </div>
+              <div class="box">
+                <div class="title">Required leverage</div>
+                <div class="value"><span id="lev">-</span>x</div>
+              </div>
+            </div>
+            <div class="separator"></div>
+            <small class="note">For informational purposes only. Not financial advice.</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: History + Live Stats -->
+      <div class="card">
+        <div class="inner">
+          <div class="hist-header">
+            <div class="hist-title">Calculation History</div>
+            <div class="hist-controls">
+              <div class="stat">
+                <span class="label">SR</span>
+                <span class="value sr" id="srStat">—</span>
+              </div>
+              <div class="stat">
+                <span class="label">Total P/L</span>
+                <span class="value pl zero" id="plStat">0.00</span>
+              </div>
+              <div class="stat">
+                <span class="label">Total Fees</span>
+                <span class="value fees" id="feesStat">0.00</span>
+              </div>
+              <button class="btn archive" id="exportBtn" title="Move all History to Archive">Export</button>
+            </div>
+          </div>
+          <ul class="hist-list" id="historyList"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <!-- Pair -->
+  <div class="modal" id="pairModal" aria-hidden="true">
+    <div class="modal-card"><div class="inner">
+      <h3 style="margin:0 0 12px">Select pair</h3>
+      <label for="pairSelect">Trading pair</label>
+      <select id="pairSelect"></select>
+      <div id="customPairWrap" style="display:none;margin-top:10px">
+        <label for="customPair">New pair</label>
+        <input type="text" id="customPair" placeholder="e.g., XRPUSDT" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn cancel" id="cancelPair">Cancel</button>
+        <button class="btn primary" id="confirmPair">Confirm</button>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- Close Live -->
+  <div class="modal" id="closeModal" aria-hidden="true">
+    <div class="modal-card"><div class="inner">
+      <h3 style="margin:0 0 12px">Close Live trade</h3>
+      <div class="muted" style="margin-bottom:6px">Select W/L, enter Closed price and Net P/L (USDT) then “Save to History”.</div>
+      <div style="display:flex;gap:18px;align-items:center;margin-bottom:8px">
+        <label><input type="radio" name="wl" id="optW" /> Win</label>
+        <label><input type="radio" name="wl" id="optL" /> Loss</label>
+      </div>
+      <div class="row">
+        <div>
+          <label for="closePrice">Closed price</label>
+          <input type="number" id="closePrice" placeholder="e.g., 101200" step="any" />
+        </div>
+        <div>
+          <label for="netAmount">Net P/L (USDT)</label>
+          <input type="number" id="netAmount" placeholder="e.g., 130 or -130" step="any" />
+        </div>
+      </div>
+      <div class="separator"></div>
+      <div class="muted" id="grossLine"></div>
+      <div class="muted" style="margin-top:6px">
+        <b>Estimated fees</b> (Gross − Net) :
+        <span id="feesCalc" class="pnl">—</span>
+      </div>
+      <div class="modal-actions">
+        <button class="btn cancel" id="cancelClose">Close</button>
+        <button class="btn primary" id="saveClosed">Save to History</button>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- Edit Live -->
+  <div class="modal" id="editLiveModal" aria-hidden="true">
+    <div class="modal-card"><div class="inner">
+      <h3 style="margin:0 0 12px">Edit Live trade</h3>
+      <div class="row">
+        <div>
+          <label for="editEntry">Entry price</label>
+          <input type="number" id="editEntry" step="any" />
+        </div>
+        <div>
+          <label for="editStop">Stop loss</label>
+          <input type="number" id="editStop" step="any" />
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn cancel" id="cancelEdit">Cancel</button>
+        <button class="btn primary" id="saveEdit">Save</button>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- TPs Live -->
+  <div class="modal" id="tpModal" aria-hidden="true">
+    <div class="modal-card"><div class="inner">
+      <h3 style="margin:0 0 12px">Partial Take-Profits (TPs)</h3>
+      <div class="muted" id="tpRemainHelp">Remaining closable: —%</div>
+      <div class="row" style="margin-top:8px">
+        <div>
+          <label for="tpPct">Close % of current position</label>
+          <input type="number" id="tpPct" placeholder="e.g., 20" step="any" />
+        </div>
+        <div>
+          <label for="tpPrice">TP price</label>
+          <input type="number" id="tpPrice" placeholder="e.g., 102000" step="any" />
+        </div>
+      </div>
+      <div class="muted" id="tpPreview" style="margin-top:8px">Secured profit preview: —</div>
+      <div id="tpListBox" style="margin-top:10px"></div>
+      <div class="modal-actions">
+        <button class="btn cancel" id="cancelTp">Cancel</button>
+        <button class="btn primary" id="applyTp">Apply TP</button>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- TPs View -->
+  <div class="modal" id="tpViewModal" aria-hidden="true">
+    <div class="modal-card"><div class="inner">
+      <h3 style="margin:0 0 12px">Partial TPs (view only)</h3>
+      <div id="tpViewList"></div>
+      <div class="modal-actions">
+        <button class="btn cancel" id="closeTpView">Close</button>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- Export confirm -->
+  <div class="modal" id="exportModal" aria-hidden="true">
+    <div class="modal-card"><div class="inner">
+      <h3 style="margin:0 0 12px">Move all History to Archive?</h3>
+      <div class="muted">This will transfer every trade currently in <b>History</b> to <b>Archive</b> and remove them from History.</div>
+      <div class="modal-actions">
+        <button class="btn cancel" id="cancelExport">Cancel</button>
+        <button class="btn primary" id="proceedExport">Proceed</button>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- Archive -->
+  <div class="modal" id="archiveModal" aria-hidden="true">
+    <div class="modal-card"><div class="inner">
+      <div class="archive-head">
+        <h3 style="margin:0">Archive</h3>
+        <div class="archive-controls">
+          <label for="yearSelect" class="muted" style="font-weight:800">Year</label>
+          <select id="yearSelect" class="select"></select>
+          <button class="btn cancel" id="closeArchive">Close</button>
+        </div>
+      </div>
+      <div class="month-grid" id="monthGrid"></div>
+      <div class="archive-stats" id="archiveStats" style="display:none">
+        <div class="stat"><span class="label">SR</span> <span class="value sr" id="archSR">—</span></div>
+        <div class="stat"><span class="label">P&amp;L</span> <span class="value" id="archPL">0.00</span></div>
+        <div class="stat"><span class="label">Wallet Growth</span> <span class="value" id="archGrowth">—</span></div>
+      </div>
+      <div class="archive-list" id="archiveList"></div>
+      <div class="muted" style="margin-top:6px">Grouping is by <b>closing date</b>. Trades without a close date use their saved date.</div>
+    </div></div>
+  </div>
+
+  <!-- Archive deletion flow -->
+  <div class="modal" id="archDel1" aria-hidden="true">
+    <div class="modal-card"><div class="inner">
+      <h3 style="margin:0 0 12px">Delete this trade?</h3>
+      <div class="muted">Are you sure you want to delete this trade from the Archive?</div>
+      <div class="modal-actions">
+        <button class="btn cancel" id="archDel1Cancel">Cancel</button>
+        <button class="btn primary" id="archDel1Yes">Yes</button>
+      </div>
+    </div></div>
+  </div>
+  <div class="modal" id="archDel2" aria-hidden="true">
+    <div class="modal-card"><div class="inner">
+      <h3 style="margin:0 0 12px;color:#ffdfe0">Permanent delete</h3>
+      <div class="muted">This trade will be <b>permanently deleted</b> and cannot be recovered.</div>
+      <div class="modal-actions">
+        <button class="btn cancel" id="archDel2Cancel">Cancel</button>
+        <button class="btn" id="archDel2Delete" style="background:#5a1c1c;border:1px solid #9c3b3b">Delete Trade</button>
+      </div>
+    </div></div>
+  </div>
+  <div class="modal" id="archDelOk" aria-hidden="true">
+    <div class="modal-card"><div class="inner">
+      <h3 style="margin:0 0 12px">Trade successfully deleted</h3>
+      <div class="modal-actions">
+        <button class="btn primary" id="archDelOkClose">Close</button>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const el = id => document.getElementById(id);
+    const PAIRS_KEY   = "savedPairs";
+    const TRADES_KEY  = "savedTrades_v2";
+    const LIVE_KEY    = "liveTrades_v1";
+    const ARCHIVE_KEY = "archivedTrades_v1";
+
+    let currentCalc = null;
+    let liveToAdd    = null;
+    let closingLiveId = null;
+    let editingLiveId = null;
+    let tpLiveId = null;
+    let archDeleteId = null;
+    let archViewState = { year: null, month: null };
+
+    function fmt(n, d=2){
+      const num = Number(n);
+      if(!isFinite(num)) return "-";
+      return num.toLocaleString(undefined,{minimumFractionDigits:d, maximumFractionDigits:d});
+    }
+    function nowIso(){ return new Date().toISOString(); }
+    function toast(msg){
+      const t = el("toast"); t.textContent = msg; t.classList.add("show");
+      setTimeout(()=> t.classList.remove("show"), 1600);
+    }
+    const getLives   = ()=> JSON.parse(localStorage.getItem(LIVE_KEY)    || "[]");
+    const setLives   = (a)=> localStorage.setItem(LIVE_KEY, JSON.stringify(a));
+    const getTrades  = ()=> JSON.parse(localStorage.getItem(TRADES_KEY)  || "[]");
+    const setTrades  = (a)=> localStorage.setItem(TRADES_KEY, JSON.stringify(a));
+    const getArchive = ()=> JSON.parse(localStorage.getItem(ARCHIVE_KEY) || "[]");
+    const setArchive = (a)=> localStorage.setItem(ARCHIVE_KEY, JSON.stringify(a));
+
+    function showModal(m, show){ m.classList.toggle("open", !!show); m.setAttribute("aria-hidden", show? "false":"true"); }
+
+    function loadPairs(){
+      let pairs = JSON.parse(localStorage.getItem(PAIRS_KEY) || "null");
+      if(!Array.isArray(pairs) || pairs.length===0) pairs = ["BTCUSDT","ETHUSDT","Other…"];
+      else { pairs = pairs.filter(p=>p!=="Other…" && p!=="Autre…"); pairs.push("Other…"); }
+      localStorage.setItem(PAIRS_KEY, JSON.stringify(pairs));
+      const sel = el("pairSelect"); sel.innerHTML = "";
+      pairs.forEach(p=>{ const o=document.createElement("option"); o.value=p; o.textContent=p; sel.appendChild(o); });
+    }
+
+    function monthNames(){ return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; }
+
+    /* Calculator */
+    el("calcBtn").addEventListener("click", ()=>{
+      const wallet = parseFloat(el("wallet").value);
+      const riskPct = parseFloat(el("risk").value);
+      const marginPct = parseFloat(el("margin").value);
+      const entry = parseFloat(el("entry").value);
+      const stop  = parseFloat(el("stop").value);
+
+      el("results").hidden = true; el("saveBtn").hidden = true; el("liveBtn").hidden = true;
+
+      if([wallet,riskPct,marginPct,entry,stop].some(v=>!isFinite(v)) || wallet<=0 || entry<=0 || stop<=0 || marginPct<=0){
+        alert("Please fill all fields with valid values."); return;
+      }
+      const riskUSDT   = wallet * (riskPct/100);
+      const priceDiff  = Math.abs(entry - stop);
+      if(priceDiff === 0){ alert("Entry and stop must be different."); return; }
+      const qtyBTC     = riskUSDT / priceDiff;
+      const marginUSDT = wallet * (marginPct/100);
+      const notionalUSDT = entry * qtyBTC;
+      let lev = notionalUSDT / marginUSDT;
+      let levRounded = Math.round(lev); if(levRounded<1) levRounded=1;
+
+      el("riskUSDT").textContent = fmt(riskUSDT,2);
+      el("marginUSDT").textContent = fmt(marginUSDT,2);
+      el("posBTC").textContent = fmt(qtyBTC,6);
+      el("posUSDT").textContent = fmt(notionalUSDT,2);
+      el("lev").textContent = levRounded.toString();
+      el("results").hidden = false; el("saveBtn").hidden = false; el("liveBtn").hidden = false;
+
+      currentCalc = {
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2,8),
+        direction: "Long",
+        wallet: Number(wallet.toFixed(2)),
+        riskPercent: Number(riskPct),
+        marginPercent: Number(marginPct),
+        entryPrice: Number(entry.toFixed(2)),
+        stopPrice: Number(stop.toFixed(2)),
+        riskAmount: Number(riskUSDT.toFixed(2)),
+        quantityBTC: Number(qtyBTC.toFixed(6)),
+        notionalUSDT: Number(notionalUSDT.toFixed(2)),
+        marginAmount: Number(marginUSDT.toFixed(2)),
+        leverage: levRounded,
+        ts: nowIso(),
+        pair: null,
+        outcome:null, closePrice:null, netProfit:null, totalFees:null,
+        open_ts:null, close_ts:null, duration:null,
+        tpList:[], tpSecured:0, tpPct:0
+      };
+    });
+    el("clearBtn").addEventListener("click", ()=>{ ["wallet","risk","margin","entry","stop"].forEach(id=>el(id).value=""); el("results").hidden=true; el("saveBtn").hidden=true; el("liveBtn").hidden=true; currentCalc=null; });
+
+    /* Save / Live */
+    el("saveBtn").addEventListener("click", ()=>{
+      if(!currentCalc) return; liveToAdd = { mode:"save" }; showModal(el("pairModal"), true); loadPairs();
+    });
+    el("liveBtn").addEventListener("click", ()=>{
+      if(!currentCalc) return;
+      if(getLives().length >= 3){ alert("Limit reached: 3 Live trades. Please close one to add another."); return; }
+      liveToAdd = { mode:"live" }; showModal(el("pairModal"), true); loadPairs();
+    });
+    el("pairSelect").addEventListener("change", (e)=>{
+      const v = e.target.value; el("customPairWrap").style.display = (v==="Other…")? "block":"none"; if(v==="Other…") el("customPair").focus();
+    });
+    el("cancelPair").addEventListener("click", ()=> showModal(el("pairModal"), false));
+    el("confirmPair").addEventListener("click", ()=>{
+      if(!currentCalc || !liveToAdd){ showModal(el("pairModal"), false); return; }
+      let pairFinal = el("pairSelect").value;
+      if(pairFinal === "Other…"){
+        const custom = (el("customPair").value || "").toUpperCase().trim();
+        if(!custom.match(/^[A-Z0-9]{3,15}$/)){ alert("Please enter a valid pair (e.g., XRPUSDT)."); return; }
+        pairFinal = custom;
+        let pairs = JSON.parse(localStorage.getItem(PAIRS_KEY) || "[]");
+        pairs = pairs.filter(p=>p!=="Other…");
+        if(!pairs.includes(pairFinal)) pairs.unshift(pairFinal);
+        pairs.push("Other…");
+        localStorage.setItem(PAIRS_KEY, JSON.stringify(pairs));
+      }
+      currentCalc.pair = pairFinal;
+
+      if(liveToAdd.mode === "save"){
+        const arr = getTrades(); arr.push({...currentCalc}); setTrades(arr);
+        currentCalc=null; el("saveBtn").hidden=true; el("liveBtn").hidden=true;
+        renderHistory(); showModal(el("pairModal"), false); toast("Saved to History");
+      }else{
+        const lives = getLives(); const liveObj = { ...currentCalc, open_ts: nowIso() };
+        lives.push(liveObj); setLives(lives);
+        currentCalc=null; el("saveBtn").hidden=true; el("liveBtn").hidden=true;
+        renderLive(); showModal(el("pairModal"), false); toast("Added to Live");
+      }
+      liveToAdd = null;
+    });
+
+    /* Close Live */
+    function computeGrossPnl(t, closePrice){ return (closePrice - t.entryPrice) * t.quantityBTC; } // long-only
+    function recomputeClosePreview(){
+      const t = getLives().find(x=>x.id===closingLiveId);
+      const cp = parseFloat(el("closePrice").value);
+      const net = parseFloat(el("netAmount").value);
+      if(!t || !isFinite(cp)){ el("feesCalc").textContent="—"; el("feesCalc").className="pnl"; el("grossLine").textContent=""; return; }
+      const gross = computeGrossPnl(t, cp);
+      el("grossLine").textContent = `Estimated gross PnL: ${fmt(gross,2)} USDT = (Close − Entry) × Size (BTC)`;
+      if(!isFinite(net)){ el("feesCalc").textContent="—"; el("feesCalc").className="pnl"; return; }
+      const fees = gross - net;
+      el("feesCalc").textContent = `${fees>=0? "":"-"}${fmt(Math.abs(fees),2)} USDT`;
+      el("feesCalc").className = "pnl " + (fees>=0? "neg":"pos");
+    }
+    el("closePrice").addEventListener("input", recomputeClosePreview);
+    el("netAmount").addEventListener("input",  recomputeClosePreview);
+
+    el("cancelClose").addEventListener("click", ()=> showModal(el("closeModal"), false));
+    el("saveClosed").addEventListener("click", ()=>{
+      const lives = getLives();
+      const idx = lives.findIndex(x=>x.id===closingLiveId);
+      if(idx<0){ showModal(el("closeModal"), false); return; }
+      const t = lives[idx];
+
+      const isW = el("optW").checked, isL = el("optL").checked;
+      if(!isW && !isL){ alert("Choose Win or Loss."); return; }
+
+      const cp = parseFloat(el("closePrice").value);
+      const net = parseFloat(el("netAmount").value);
+      if(!isFinite(cp)){ alert("Enter a valid Closed price."); return; }
+      if(!isFinite(net)){ alert("Enter a valid Net P/L (USDT)."); return; }
+
+      const gross = computeGrossPnl(t, cp);
+      const fees  = gross - net;
+      const close_ts = nowIso();
+      const duration = diffToDHm(t.open_ts, close_ts);
+
+      const saved = getTrades();
+      saved.push({
+        ...t,
+        ts: close_ts,
+        closePrice: Number(cp.toFixed(2)),
+        outcome: isW ? "W" : "L",
+        netProfit: Number(net.toFixed(2)),
+        totalFees: Number(fees.toFixed(2)),
+        close_ts,
+        duration
+      });
+      setTrades(saved);
+
+      lives.splice(idx,1); setLives(lives);
+      showModal(el("closeModal"), false);
+      renderLive(); renderHistory();
+      toast("Trade saved to History");
+      // Reset modal inputs for next time
+      el("optW").checked=false; el("optL").checked=false;
+      el("closePrice").value=""; el("netAmount").value="";
+      el("feesCalc").textContent="—"; el("grossLine").textContent="";
+      closingLiveId = null;
+    });
+
+    function diffToDHm(startIso, endIso){
+      const s=new Date(startIso), e=new Date(endIso);
+      let ms = Math.max(0, e - s);
+      const days = Math.floor(ms / (24*3600e3)); ms -= days*24*3600e3;
+      const hours= Math.floor(ms / 3600e3); ms -= hours*3600e3;
+      const mins = Math.floor(ms / 60e3);
+      return `${days}d ${hours}h ${mins}m`;
+    }
+
+    /* Edit Live */
+    el("saveEdit").addEventListener("click", ()=>{
+      const lives = getLives();
+      const idx = lives.findIndex(x=>x.id===editingLiveId);
+      if(idx<0){ showModal(el("editLiveModal"), false); return; }
+      const t = lives[idx];
+      const newEntry = parseFloat(el("editEntry").value);
+      const newStop  = parseFloat(el("editStop").value);
+      if(!isFinite(newEntry) || newEntry<=0 || !isFinite(newStop) || newStop<=0){
+        alert("Please enter valid Entry and Stop values."); return;
+      }
+      t.entryPrice = Number(newEntry.toFixed(2));
+      t.stopPrice  = Number(newStop.toFixed(2));
+      t.notionalUSDT = Number((t.entryPrice * t.quantityBTC).toFixed(2));
+      let lev = t.notionalUSDT / t.marginAmount; t.leverage = Math.max(1, Math.round(lev));
+      lives[idx] = t; setLives(lives);
+      showModal(el("editLiveModal"), false);
+      renderLive(); toast("Live trade updated");
+    });
+    el("cancelEdit").addEventListener("click", ()=> showModal(el("editLiveModal"), false));
+
+    /* TPs (partial takes) */
+    function renderTpModal(){
+      const t = getLives().find(x=>x.id===tpLiveId); if(!t) return;
+      const remain = Math.max(0, 100 - (t.tpPct || 0));
+      el("tpRemainHelp").textContent = `Remaining closable: ${remain.toFixed(2)}%`;
+      const pctVal = parseFloat(el("tpPct").value);
+      const priceVal = parseFloat(el("tpPrice").value);
+      if(isFinite(pctVal) && isFinite(priceVal) && pctVal>0){
+        const qtyClose = t.quantityBTC * (pctVal/100);
+        const profitPreview = (priceVal - t.entryPrice) * qtyClose;
+        const sign = profitPreview>=0 ? "+" : "";
+        el("tpPreview").textContent = `Secured profit preview: ${sign}${fmt(profitPreview,2)} USDT (closes ${fmt(qtyClose,6)} BTC)`;
+      }else{
+        el("tpPreview").textContent = "Secured profit preview: —";
+      }
+      const box = el("tpListBox"); box.innerHTML = "";
+      if(!t.tpList || t.tpList.length===0){
+        const empty = document.createElement("div"); empty.className = "muted"; empty.textContent = "No partial TPs yet. Add one above."; box.appendChild(empty);
+      }else{
+        t.tpList.forEach((tp, idx)=>{
+          const row = document.createElement("div"); row.className = "hist-item";
+          const sign = tp.profit>=0?"+":"";
+          row.innerHTML = `<div class="muted"><b>${tp.pct}%</b> at <b>${fmt(tp.price,2)}</b> • qty: <b>${fmt(tp.qty,6)} BTC</b> • secured: <b>${sign}${fmt(tp.profit,2)} USDT</b> • ${new Date(tp.ts).toLocaleString()}</div>`;
+          if(idx === t.tpList.length - 1){
+            const undo = document.createElement("button"); undo.className = "btn ghost"; undo.textContent = "Undo last";
+            undo.addEventListener("click", ()=>{
+              const lives2 = getLives(); const t2 = lives2.find(x=>x.id===tpLiveId);
+              const last = t2.tpList.pop();
+              t2.quantityBTC = Number((t2.quantityBTC + last.qty).toFixed(6));
+              t2.notionalUSDT = Number((t2.entryPrice * t2.quantityBTC).toFixed(2));
+              t2.marginAmount = Number((t2.marginAmount / (1 - last.pct/100)).toFixed(2));
+              t2.tpPct = Number((t2.tpPct - last.pct).toFixed(6));
+              t2.tpSecured = Number((t2.tpSecured - last.profit).toFixed(2));
+              let lev = t2.notionalUSDT / t2.marginAmount; t2.leverage = Math.max(1, Math.round(lev));
+              setLives(lives2); renderTpModal(); renderLive();
+            });
+            row.appendChild(undo);
+          }
+          box.appendChild(row);
+        });
+        const total = document.createElement("div"); total.className="muted";
+        const signT = (t.tpSecured||0) >= 0 ? "+" : "";
+        total.textContent = `Total secured so far: ${signT}${fmt(t.tpSecured||0,2)} USDT`;
+        box.appendChild(total);
+      }
+    }
+    el("tpPct").addEventListener("input", renderTpModal);
+    el("tpPrice").addEventListener("input", renderTpModal);
+    el("cancelTp").addEventListener("click", ()=> showModal(el("tpModal"), false));
+    el("applyTp").addEventListener("click", ()=>{
+      const lives = getLives(); const t = lives.find(x=>x.id===tpLiveId);
+      if(!t){ showModal(el("tpModal"), false); return; }
+      const pct = parseFloat(el("tpPct").value);
+      const price = parseFloat(el("tpPrice").value);
+      if(!isFinite(pct) || pct<=0){ alert("Enter a valid percent to close."); return; }
+      if(!isFinite(price) || price<=0){ alert("Enter a valid TP price."); return; }
+      const remain = Math.max(0, 100 - (t.tpPct || 0));
+      if(pct > remain - 0.001){ alert(`Percent too high. Remaining closable: ${remain.toFixed(2)}%`); return; }
+      const qtyClose = t.quantityBTC * (pct/100);
+      const profit = (price - t.entryPrice) * qtyClose;
+      t.quantityBTC = Number((t.quantityBTC - qtyClose).toFixed(6));
+      t.notionalUSDT = Number((t.entryPrice * t.quantityBTC).toFixed(2));
+      t.marginAmount = Number((t.marginAmount * (1 - pct/100)).toFixed(2));
+      t.tpPct = Number(((t.tpPct || 0) + pct).toFixed(6));
+      t.tpSecured = Number(((t.tpSecured || 0) + profit).toFixed(2));
+      t.tpList = t.tpList || [];
+      t.tpList.push({ pct:Number(pct.toFixed(6)), price:Number(price.toFixed(2)), qty:Number(qtyClose.toFixed(6)), profit:Number(profit.toFixed(2)), ts: nowIso() });
+      let lev = t.notionalUSDT / t.marginAmount; t.leverage = Math.max(1, Math.round(lev));
+      setLives(lives);
+      el("tpPct").value = ""; el("tpPrice").value = "";
+      renderTpModal(); renderLive(); toast("TP applied");
+    });
+
+    /* Render Live */
+    function renderLive(){
+      const box = el("liveList"); box.innerHTML = "";
+      const lives = getLives();
+      if(lives.length===0){
+        const ph = document.createElement("div"); ph.className="live-kv"; ph.textContent = "No trades in Live. Click “Calculate”, then “Live” to add (max 3)."; box.appendChild(ph); return;
+      }
+      lives.forEach(t=>{
+        const card = document.createElement("div"); card.className = "live-card";
+
+        const top = document.createElement("div"); top.className = "live-card-top";
+        const left = document.createElement("div"); left.className = "live-id";
+        left.innerHTML = `<span class="live-dot" style="width:10px;height:10px"></span><span class="badge">${t.pair} ${t.direction}</span>`;
+        const right = document.createElement("div");
+        const tpsBtn = document.createElement("button");
+        tpsBtn.className = "btn tps" + ((t.tpList&&t.tpList.length)? " active": "");
+        tpsBtn.textContent = "TPs"; tpsBtn.addEventListener("click", ()=>{ tpLiveId = t.id; showModal(el("tpModal"), true); renderTpModal(); });
+        const editBtn = document.createElement("button");
+        editBtn.className = "btn edit"; editBtn.textContent = "Edit"; editBtn.addEventListener("click", ()=>{ editingLiveId = t.id; showModal(el("editLiveModal"), true); el("editEntry").value=t.entryPrice; el("editStop").value=t.stopPrice; });
+        const closeBtn = document.createElement("button");
+        closeBtn.className = "btn close"; closeBtn.textContent = "Close Trade"; closeBtn.addEventListener("click", ()=>{ closingLiveId = t.id; showModal(el("closeModal"), true); });
+        right.appendChild(tpsBtn); right.appendChild(editBtn); right.appendChild(closeBtn);
+        top.appendChild(left); top.appendChild(right); card.appendChild(top);
+
+        const body = document.createElement("div"); body.className = "live-kv";
+        const opened = new Date(t.open_ts).toLocaleString();
+        const secured = t.tpSecured || 0; const signS = secured>=0?"+":"";
+        body.innerHTML = `
+          <div><b>Opened</b> : ${opened}</div>
+          <div><b>Entry</b> : ${fmt(t.entryPrice,2)} • <b>Stop</b> : ${fmt(t.stopPrice,2)}</div>
+          <div><b>Size</b> : ${fmt(t.quantityBTC,6)} BTC • ${fmt(t.notionalUSDT,2)} USDT</div>
+          <div><b>Margin</b> : ${fmt(t.marginAmount,2)} USDT • <b>Leverage</b> : ${t.leverage}x</div>
+          ${ (t.tpList && t.tpList.length) ? `<div><b>P&amp;L (secured)</b>: ${signS}${fmt(secured,2)} USDT</div>`:"" }
+        `;
+        card.appendChild(body);
+        box.appendChild(card);
+      });
+    }
+
+    /* Stats */
+    function renderStats(trades){
+      const srEl = el("srStat"), plEl = el("plStat"), feesEl = el("feesStat");
+      let totalPL = 0, totalFees = 0, wins = 0, losses = 0;
+      trades.forEach(t=>{
+        if(typeof t.netProfit === "number"){ totalPL += t.netProfit; if(t.netProfit > 0) wins++; if(t.netProfit < 0) losses++; }
+        if(typeof t.totalFees === "number"){ totalFees += t.totalFees; }
+      });
+      const closed = wins + losses;
+      srEl.textContent = closed>0 ? `${((wins/closed)*100).toFixed(2)}%` : "—";
+      plEl.textContent = (totalPL >= 0 ? "+"+fmt(totalPL,2) : fmt(totalPL,2));
+      plEl.classList.remove("pos","neg","zero");
+      if(totalPL > 0) plEl.classList.add("pos"); else if(totalPL < 0) plEl.classList.add("neg"); else plEl.classList.add("zero");
+      feesEl.textContent = fmt(totalFees,2);
+    }
+
+    /* History */
+    function renderHistory(){
+      const ul = el("historyList"); ul.innerHTML = "";
+      const trades = getTrades();
+      renderStats(trades);
+      if(!Array.isArray(trades) || trades.length===0){
+        const li=document.createElement("li"); li.className="hist-item"; li.innerHTML = '<span class="muted">No saved calculations.</span>'; ul.appendChild(li); return;
+      }
+      const sorted = trades.slice().reverse();
+      sorted.forEach(trade=>{
+        const li = document.createElement("li"); li.className="hist-item";
+        const ts = new Date(trade.ts).toLocaleString();
+        const header=document.createElement("div"); header.className="hist-top";
+        const left=document.createElement("div");
+        const extra = trade.outcome ? ` • ${trade.outcome}` : "";
+        left.innerHTML = `<span class="pill">${trade.pair} ${trade.direction} [ ${ts} ]${extra}</span>`;
+        const right=document.createElement("div");
+        if(trade.tpList && trade.tpList.length){
+          const viewBtn = document.createElement("button");
+          viewBtn.className = "btn view"; viewBtn.textContent = "TPs";
+          viewBtn.addEventListener("click", ()=>{
+            const box = el("tpViewList"); box.innerHTML = "";
+            trade.tpList.forEach(tp=>{
+              const row = document.createElement("div"); row.className = "hist-item";
+              const sign = tp.profit>=0?"+":"";
+              row.innerHTML = `<div class="muted"><b>${tp.pct}%</b> at <b>${fmt(tp.price,2)}</b> • qty: <b>${fmt(tp.qty,6)} BTC</b> • secured: <b>${sign}${fmt(tp.profit,2)} USDT</b> • ${new Date(tp.ts).toLocaleString()}</div>`;
+              box.appendChild(row);
+            });
+            showModal(el("tpViewModal"), true);
+          });
+          right.appendChild(viewBtn);
+        }
+        const del=document.createElement("button"); del.className="trash"; del.textContent="🗑️";
+        del.addEventListener("click", ()=>{
+          if(!confirm("Delete this calculation?")) return;
+          const cur=getTrades().filter(x=>x.id!==trade.id); setTrades(cur); renderHistory();
+        });
+        right.appendChild(del);
+        header.appendChild(left); header.appendChild(right); li.appendChild(header);
+
+        const body=document.createElement("div"); body.className="labels";
+        const openLine = trade.open_ts ? `<div class="muted"><b>Opened</b>: ${new Date(trade.open_ts).toLocaleString()} • <b>Closed</b>: ${trade.close_ts? new Date(trade.close_ts).toLocaleString():"—"} • <b>Duration</b>: ${trade.duration || "—"}</div>` : "";
+        const pnlLine  = (typeof trade.netProfit==="number" || typeof trade.totalFees==="number")
+          ? `<div class="muted"><b>Net P/L</b>: <span class="pnl ${trade.netProfit>=0?"pos":"neg"}">${trade.netProfit>=0? "+"+fmt(trade.netProfit,2): fmt(trade.netProfit,2)}</span> • <b>Fees</b>: ${fmt(trade.totalFees??0,2)} USDT</div>` : "";
+        body.innerHTML = `
+          <div class="muted"><b>Wallet</b>: ${fmt(trade.wallet,2)} USDT • <b>Risk</b>: ${fmt(trade.riskPercent,2)}% • <b>Margin</b>: ${fmt(trade.marginPercent,2)}%</div>
+          <div class="muted"><b>Entry</b>: ${fmt(trade.entryPrice,2)} • <b>Stop</b>: ${fmt(trade.stopPrice,2)}</div>
+          <div class="muted"><b>Size</b>: ${fmt(trade.quantityBTC,6)} BTC • ${fmt(trade.notionalUSDT,2)} USDT • <b>Used margin</b>: ${fmt(trade.marginAmount,2)} USDT • <b>Leverage</b>: ${trade.leverage}x</div>
+          ${openLine} ${pnlLine}
+        `;
+        li.appendChild(body); ul.appendChild(li);
+      });
+    }
+
+    /* Export History -> Archive */
+    function showExportModal(show){ showModal(el("exportModal"), show); }
+    el("exportBtn").addEventListener("click", ()=>{
+      const trades = getTrades();
+      if(!trades.length){ alert("No trades in History to export."); return; }
+      showExportModal(true);
+    });
+    el("cancelExport").addEventListener("click", ()=> showExportModal(false));
+    el("proceedExport").addEventListener("click", ()=>{
+      const trades = getTrades(); const arch = getArchive();
+      arch.push(...trades); setArchive(arch); setTrades([]); renderHistory(); showExportModal(false); toast("Exported to Archive");
+    });
+
+    /* Archive view */
+    function showArchiveModal(show){
+      showModal(el("archiveModal"), show);
+      if(show){ buildArchiveYears(); buildMonthGrid(); renderArchiveMonth(); }
+      else { archViewState = { year:null, month:null }; el("archiveList").innerHTML = ""; el("archiveStats").style.display="none"; }
+    }
+    el("openArchive").addEventListener("click", ()=> showArchiveModal(true));
+    el("closeArchive").addEventListener("click", ()=> showArchiveModal(false));
+
+    function buildArchiveYears(){
+      const arch = getArchive();
+      const years = [...new Set(arch.map(t => new Date(t.close_ts || t.ts).getFullYear()))].filter(y=>!isNaN(y)).sort((a,b)=>b-a);
+      const sel = el("yearSelect"); sel.innerHTML = "";
+      if(years.length===0){ const opt=document.createElement("option"); opt.value=""; opt.textContent="—"; sel.appendChild(opt); archViewState.year=null; return; }
+      years.forEach(y=>{ const opt=document.createElement("option"); opt.value=String(y); opt.textContent=String(y); sel.appendChild(opt); });
+      archViewState.year = archViewState.year || String(years[0]); sel.value = archViewState.year;
+      sel.onchange = ()=>{ archViewState.year = sel.value; buildMonthGrid(); renderArchiveMonth(); };
+    }
+    function buildMonthGrid(){
+      const grid = el("monthGrid"); grid.innerHTML = "";
+      const year = archViewState.year;
+      const arch = getArchive().filter(t => new Date(t.close_ts || t.ts).getFullYear() == year);
+      const counts = Array(12).fill(0);
+      arch.forEach(t=> counts[new Date(t.close_ts || t.ts).getMonth()]++);
+      monthNames().forEach((name, i)=>{
+        const b = document.createElement("button"); b.className="m-btn"; b.textContent = name;
+        if(!counts[i]) b.disabled = true;
+        const span = document.createElement("span"); span.className="m-count"; span.textContent = counts[i] ? `(${counts[i]})` : "";
+        b.appendChild(span);
+        if(archViewState.month===i) b.classList.add("active");
+        b.addEventListener("click", ()=>{ archViewState.month = i; renderArchiveMonth(); });
+        grid.appendChild(b);
+      });
+    }
+    function renderArchiveMonth(){
+      const list = el("archiveList"); list.innerHTML = "";
+      const statsBox = el("archiveStats"); statsBox.style.display="none";
+      const year = archViewState.year, month = archViewState.month;
+      if(year===null || month===null){ list.innerHTML = `<div class="muted">Pick a month.</div>`; return; }
+      const arch = getArchive().filter(t=>{
+        const d = new Date(t.close_ts || t.ts); return d.getFullYear() == year && d.getMonth() == month;
+      }).sort((a,b)=> new Date(b.ts) - new Date(a.ts));
+      if(!arch.length){ list.innerHTML = `<div class="muted">No trades for this month.</div>`; return; }
+      // Stats
+      let wins=0, losses=0, pnl=0; arch.forEach(t=>{ if(typeof t.netProfit==="number"){ pnl += t.netProfit; if(t.netProfit>0) wins++; else if(t.netProfit<0) losses++; }});
+      const closed = wins+losses;
+      el("archSR").textContent = closed? ((wins/closed)*100).toFixed(2)+"%" : "—";
+      el("archPL").textContent = pnl>=0? "+"+fmt(pnl,2): fmt(pnl,2);
+      const firstWallet = arch[arch.length-1]?.wallet || 0;
+      el("archGrowth").textContent = firstWallet>0? ((pnl/firstWallet)*100).toFixed(2)+"%":"—";
+      statsBox.style.display="flex";
+
+      arch.forEach(trade=>{
+        const li = document.createElement("div"); li.className="hist-item";
+        const ts = new Date(trade.ts).toLocaleString();
+        const header=document.createElement("div"); header.className="hist-top";
+        const left=document.createElement("div");
+        const extra = trade.outcome ? ` • ${trade.outcome}` : "";
+        left.innerHTML = `<span class="pill">${trade.pair} ${trade.direction} [ ${ts} ]${extra}</span>`;
+        const right=document.createElement("div");
+        if(trade.tpList && trade.tpList.length){
+          const viewBtn = document.createElement("button"); viewBtn.className = "btn view"; viewBtn.textContent = "TPs";
+          viewBtn.addEventListener("click", ()=>{
+            const box = el("tpViewList"); box.innerHTML = "";
+            trade.tpList.forEach(tp=>{
+              const row = document.createElement("div"); row.className = "hist-item";
+              const sign = tp.profit>=0?"+":"";
+              row.innerHTML = `<div class="muted"><b>${tp.pct}%</b> at <b>${fmt(tp.price,2)}</b> • qty: <b>${fmt(tp.qty,6)} BTC</b> • secured: <b>${sign}${fmt(tp.profit,2)} USDT</b> • ${new Date(tp.ts).toLocaleString()}</div>`;
+              box.appendChild(row);
+            });
+            showModal(el("tpViewModal"), true);
+          });
+          right.appendChild(viewBtn);
+        }
+        const del=document.createElement("button"); del.className="trash"; del.textContent="🗑️";
+        del.addEventListener("click", ()=>{ archDeleteId = trade.id; showModal(el("archDel1"), true); });
+        right.appendChild(del);
+        header.appendChild(left); header.appendChild(right); li.appendChild(header);
+
+        const body=document.createElement("div"); body.className="labels";
+        const openLine = trade.open_ts ? `<div class="muted"><b>Opened</b>: ${new Date(trade.open_ts).toLocaleString()} • <b>Closed</b>: ${trade.close_ts? new Date(trade.close_ts).toLocaleString():"—"} • <b>Duration</b>: ${trade.duration || "—"}</div>` : "";
+        const pnlLine  = (typeof trade.netProfit==="number" || typeof trade.totalFees==="number")
+          ? `<div class="muted"><b>Net P/L</b>: <span class="pnl ${trade.netProfit>=0?"pos":"neg"}">${trade.netProfit>=0? "+"+fmt(trade.netProfit,2): fmt(trade.netProfit,2)}</span> • <b>Fees</b>: ${fmt(trade.totalFees??0,2)} USDT</div>` : "";
+        body.innerHTML = `
+          <div class="muted"><b>Wallet</b>: ${fmt(trade.wallet,2)} USDT • <b>Risk</b>: ${fmt(trade.riskPercent,2)}% • <b>Margin</b>: ${fmt(trade.marginPercent,2)}%</div>
+          <div class="muted"><b>Entry</b>: ${fmt(trade.entryPrice,2)} • <b>Stop</b>: ${fmt(trade.stopPrice,2)}</div>
+          <div class="muted"><b>Size</b>: ${fmt(trade.quantityBTC,6)} BTC • ${fmt(trade.notionalUSDT,2)} USDT • <b>Used margin</b>: ${fmt(trade.marginAmount,2)} USDT • <b>Leverage</b>: ${trade.leverage}x</div>
+          ${openLine} ${pnlLine}
+        `;
+        li.appendChild(body); list.appendChild(li);
+      });
+    }
+
+    // Archive deletion flow
+    el("archDel1Cancel").addEventListener("click", ()=> showModal(el("archDel1"), false));
+    el("archDel1Yes").addEventListener("click", ()=>{ showModal(el("archDel1"), false); showModal(el("archDel2"), true); });
+    el("archDel2Cancel").addEventListener("click", ()=>{ archDeleteId=null; showModal(el("archDel2"), false); });
+    el("archDel2Delete").addEventListener("click", ()=>{
+      if(!archDeleteId){ showModal(el("archDel2"), false); return; }
+      let arch = getArchive(); arch = arch.filter(t=>t.id!==archDeleteId); setArchive(arch); archDeleteId = null;
+      showModal(el("archDel2"), false); showModal(el("archDelOk"), true);
+      buildArchiveYears(); buildMonthGrid(); renderArchiveMonth();
+    });
+    el("archDelOkClose").addEventListener("click", ()=> showModal(el("archDelOk"), false));
+
+    /* TP view modal close */
+    el("closeTpView").addEventListener("click", ()=> showModal(el("tpViewModal"), false));
+
+    /* Live render + History render */
+    function renderAll(){ renderLive(); renderHistory(); }
+    document.addEventListener("DOMContentLoaded", ()=>{ loadPairs(); renderAll(); });
+
+    /* Helpers for Close modal */
+    function diff(a,b){ return Math.abs(a-b); }
+  </script>
+</body>
+</html>
