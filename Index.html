@@ -6,101 +6,69 @@
   <title>Perp Trading Calculator</title>
   <style>
     :root{
-      --bg:#0b1628;
-      --panel:#0f1f39;
-      --panel-2:#102544;
-      --text:#e7eefc;
-      --muted:#9fb3d9;
-      --accent:#2a66ff;
-      --accent-2:#39b17a;
-      --border:#334e7e;
-      --chip:#142a57;
-      --green:#39b17a;
-      --orange:#f6c062;
-      --purple:#7c5cff;
-      --purple-2:#6547ff;
+      --bg:#0b1628; --panel:#0f1f39; --panel-2:#102544; --text:#e7eefc; --muted:#9fb3d9;
+      --accent:#2a66ff; --accent-2:#39b17a; --border:#334e7e; --chip:#142a57; --green:#39b17a;
+      --orange:#f6c062; --purple:#7c5cff; --purple-2:#6547ff;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
+    *{box-sizing:border-box} html,body{height:100%}
     body{
-      margin:0;
-      font-family: "Segoe UI", Roboto, system-ui, -apple-system, Arial, sans-serif;
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
+      margin:0; font-family:"Segoe UI",Roboto,system-ui,-apple-system,Arial,sans-serif;
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
       background: radial-gradient(1200px 800px at 20% -10%, #142b54 0%, transparent 60%),
                   radial-gradient(1200px 800px at 120% 120%, #13305f 0%, transparent 50%),
                   var(--bg);
-      color:var(--text);
-      padding:24px 16px 80px;
-      line-height:1.45;
+      color:var(--text); padding:24px 16px 80px; line-height:1.45;
     }
     .wrap{max-width:1120px;margin:0 auto}
 
-    /* Topbar */
     .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-    .brand{font-weight:800;letter-spacing:.2px}
-    .brand h1{margin:0;font-size:22px}
+    .brand h1{margin:0;font-size:22px;font-weight:800}
     .brand .desc{color:var(--muted);font-size:13px;margin-top:4px}
-    .top-actions{display:flex;gap:10px}
-    .btn{
-      border:1px solid transparent; border-radius:12px; padding:10px 12px;
-      font-weight:750; letter-spacing:.2px; cursor:pointer;
-      transition: transform .04s, background .2s, border .2s, filter .2s, opacity .2s;
-      color:white;
-    }
+    .top-actions{display:flex;gap:10px;align-items:center}
+    .plan-badge{font-size:12px;font-weight:800;padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:#0c1b34;color:#bfe8d3}
+
+    .btn{border:1px solid transparent;border-radius:12px;padding:10px 12px;font-weight:750;letter-spacing:.2px;cursor:pointer;color:white}
     .btn:active{transform:translateY(1px)}
-    .btn.primary{background:var(--accent)}
-    .btn.primary:hover{filter:brightness(1.05)}
+    .btn.primary{background:var(--accent)} .btn.primary:hover{filter:brightness(1.05)}
     .btn.success{background:var(--accent-2)}
-    .btn.success:hover{filter:brightness(1.05)}
     .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
     .btn.archive{background:#1a2b52;border:1px solid #3b5aa1}
-    .btn.archive:hover{filter:brightness(1.07)}
-    .btn.edit{ background:#0b1e3a; border:1px solid #325a97; color:#cfe0ff }
-    .btn.tps{ background:#13204a; border:1px solid #3e3aa1; color:#cfcfff }
-    .btn.tps.active{ background:var(--purple); border-color:var(--purple-2); color:white }
-    .btn.close{ background:#102a22; border:1px solid #1f644e; color:#aef0d1 }
+    .btn.edit{background:#0b1e3a;border:1px solid #325a97;color:#cfe0ff}
+    .btn.tps{background:#13204a;border:1px solid #3e3aa1}
+    .btn.tps.active{background:var(--purple);border-color:var(--purple-2)}
+    .btn.close{background:#102a22;border:1px solid #1f644e;color:#aef0d1}
+    .btn.cancel{background:#6c757d}
 
-    /* LIVE AREA */
-    .live-area{
-      margin:0 auto 18px;
-      position:sticky; top:0; z-index:20;
-      background: linear-gradient(180deg, rgba(13,26,49,.75) 0%, rgba(13,26,49,.35) 100%);
-      backdrop-filter: blur(4px);
-      border:1px solid var(--border);
-      border-radius:16px;
-      padding:12px;
-    }
-    .live-head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; color:#bfe8d3; font-weight:800; letter-spacing:.2px; }
-    .live-dot{ width:12px; height:12px; border-radius:999px; background:var(--green); box-shadow:0 0 0 0 rgba(57,177,122,.5); animation: dotPulse 1.6s ease-in-out infinite; }
-    .live-head .title{font-size:13px; opacity:.9}
-    @keyframes dotPulse { 0%{ box-shadow:0 0 0 0 rgba(57,177,122,.55); transform:scale(1); opacity:1;} 50%{ box-shadow:0 0 0 8px rgba(57,177,122,0); transform:scale(0.95); opacity:.85;} 100%{ box-shadow:0 0 0 0 rgba(57,177,122,0); transform:scale(1); opacity:1;} }
-    .live-list{ display:grid; grid-template-columns:1fr; gap:10px; }
-    @media (min-width:900px){ .live-list{ grid-template-columns:1fr 1fr 1fr; } }
-    .live-card{ border:1px solid rgba(57,177,122,.45); background: linear-gradient(180deg, rgba(57,177,122,.12) 0%, rgba(57,177,122,.06) 100%); border-radius:18px; padding:12px; animation: breath 2.4s ease-in-out infinite; }
-    @keyframes breath{ 0%{ box-shadow:0 0 0 0 rgba(57,177,122,.2); } 50%{ box-shadow:0 0 24px 2px rgba(57,177,122,.25); } 100%{ box-shadow:0 0 0 0 rgba(57,177,122,.2); } }
-    .live-card-top{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; }
-    .live-id{ display:flex; align-items:center; gap:10px; font-weight:800; font-size:12px; color:#c9f1dd; }
-    .live-id .badge{padding:4px 10px; border-radius:999px; border:1px solid rgba(57,177,122,.4); background:rgba(57,177,122,.12)}
-    .live-kv{font-size:12px; color:#dff6eb}
-    .live-kv b{color:#b9e9cd}
+    /* AUTH gate */
+    #authGate{max-width:420px;margin:40px auto;background:#0f1f39;border:1px solid #334e7e;border-radius:14px;padding:18px;display:none}
+    #authGate input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:#0c1b34;color:#e7eefc;font-weight:600}
+
+    /* LIVE */
+    .live-area{margin:0 auto 18px;position:sticky;top:0;z-index:20;background:linear-gradient(180deg,rgba(13,26,49,.75) 0%,rgba(13,26,49,.35) 100%);
+      backdrop-filter:blur(4px);border:1px solid var(--border);border-radius:16px;padding:12px}
+    .live-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;color:#bfe8d3;font-weight:800}
+    .live-dot{width:12px;height:12px;border-radius:999px;background:var(--green);box-shadow:0 0 0 0 rgba(57,177,122,.5);animation:dotPulse 1.6s ease-in-out infinite}
+    @keyframes dotPulse{0%{box-shadow:0 0 0 0 rgba(57,177,122,.55)}50%{box-shadow:0 0 0 8px rgba(57,177,122,0)}100%{box-shadow:0 0 0 0 rgba(57,177,122,0)}}
+    .live-list{display:grid;grid-template-columns:1fr;gap:10px} @media (min-width:900px){.live-list{grid-template-columns:1fr 1fr 1fr}}
+    .live-card{border:1px solid rgba(57,177,122,.45);background:linear-gradient(180deg,rgba(57,177,122,.12) 0%,rgba(57,177,122,.06) 100%);border-radius:18px;padding:12px}
+    .live-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+    .live-id{display:flex;align-items:center;gap:10px;font-weight:800;font-size:12px;color:#c9f1dd}
+    .live-id .badge{padding:4px 10px;border-radius:999px;border:1px solid rgba(57,177,122,.4);background:rgba(57,177,122,.12)}
+    .live-kv{font-size:12px;color:#dff6eb} .live-kv b{color:#b9e9cd}
 
     /* MAIN GRID */
     .shell{display:grid;grid-template-columns:1fr;gap:20px}
-    @media (min-width:1060px){ .shell{grid-template-columns: 520px 1fr;} }
-    .card{ background:linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%); border:1px solid var(--border); border-radius:14px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+    @media (min-width:1060px){.shell{grid-template-columns:520px 1fr}}
+    .card{background:linear-gradient(180deg,var(--panel) 0%,var(--panel-2) 100%);border:1px solid var(--border);border-radius:14px}
     .card .inner{padding:20px}
     label{display:block;font-weight:650;margin:14px 0 6px;color:var(--muted)}
-    input[type="number"], input[type="text"], select{
-      width:100%; padding:12px 12px; border-radius:10px; border:1px solid var(--border); outline:none; background:#0c1b34; color:#e7eefc; font-weight:600;
-    }
-    input::placeholder{color:#7f93ba}
+    input[type="number"],input[type="text"],input[type="email"],input[type="password"],select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);outline:none;background:#0c1b34;color:#e7eefc;font-weight:600}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
-    .results{ background:#0c1b34; border:1px dashed var(--border); border-radius:12px; padding:14px; margin-top:14px; }
+    .results{background:#0c1b34;border:1px dashed var(--border);border-radius:12px;padding:14px;margin-top:14px}
     .kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
-    .kpi .box{ background:#0e2041;border:1px solid var(--border);border-radius:10px;padding:10px;}
-    .kpi .title{font-size:12px;color:var(--muted);font-weight:800;margin-bottom:4px;letter-spacing:.2px}
+    .kpi .box{background:#0e2041;border:1px solid var(--border);border-radius:10px;padding:10px}
+    .kpi .title{font-size:12px;color:var(--muted);font-weight:800;margin-bottom:4px}
     .kpi .value{font-size:16px;font-weight:800}
     .separator{height:1px;background:var(--border);margin:14px 0}
     small.note{color:#8aa2cf}
@@ -108,38 +76,26 @@
     /* History + Stats */
     .hist-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px}
     .hist-title{font-weight:800}
-    .hist-stats{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .hist-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
     .stat{display:flex;gap:6px;align-items:center;background:#0b1e3a;border:1px solid var(--border);border-radius:999px;padding:6px 10px}
-    .stat .label{font-size:12px;color:#9fb3d9;font-weight:800}
-    .stat .value{font-size:13px;font-weight:900}
-    .sr{color:var(--orange)}
-    .pl.pos{color:#6ee7b7}
-    .pl.neg{color:#f7a6a3}
-    .pl.zero{color:#c8d3ea}
-    .fees{color:#dbe7ff}
-    .hist-controls{display:flex;gap:8px;align-items:center}
-
+    .stat .label{font-size:12px;color:#9fb3d9;font-weight:800}.stat .value{font-size:13px;font-weight:900}
+    .pl.pos{color:#6ee7b7}.pl.neg{color:#f7a6a3}.pl.zero{color:#c8d3ea}.sr{color:var(--orange)} .fees{color:#dbe7ff}
     .hist-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;max-height:540px;overflow:auto}
-    .hist-item{ background:#0c1b34;border:1px solid var(--border);border-radius:10px;padding:12px;position:relative }
+    .hist-item{background:#0c1b34;border:1px solid var(--border);border-radius:10px;padding:12px;position:relative}
     .hist-top{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:6px}
     .pill{font-weight:800;font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:var(--chip)}
-    .muted{color:#9fb3d9;font-size:12px}
-    .labels b{color:#b9c8e8;font-weight:800}
-    .trash{ border:none;background:transparent;cursor:pointer;font-size:18px;line-height:1;color:#ffb3b1; padding:6px 8px; border-radius:8px;}
-    .trash:hover{background:rgba(217,83,79,.12);color:#ffd3d1}
+    .muted{color:#9fb3d9;font-size:12px} .labels b{color:#b9c8e8;font-weight:800}
+    .trash{border:none;background:transparent;cursor:pointer;font-size:18px;line-height:1;color:#ffb3b1;padding:6px 8px;border-radius:8px}
+    .trash:hover{background:rgba(217,83,79,.12)}
     .btn.view{ background:#0e2041;border:1px solid #3a5288; color:#cfe0ff; padding:8px 10px; border-radius:10px; font-weight:800; }
 
-    /* Modals (generic) */
+    /* Modals */
     .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
     .modal.open{display:flex}
-    .modal-card{width:100%;max-width:640px;background:linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);border:1px solid var(--border);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+    .modal-card{width:100%;max-width:680px;background:linear-gradient(180deg,var(--panel) 0%,var(--panel-2) 100%);border:1px solid var(--border);border-radius:14px}
     .modal-card .inner{padding:18px}
     .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
-    .btn.cancel{background:#6c757d}
-    .btn.cancel:hover{filter:brightness(1.05)}
-    .pnl{ font-weight:900; }
-    .pnl.pos{ color: #6ee7b7; }
-    .pnl.neg{ color: #f7a6a3; }
+    .pnl{font-weight:900}.pnl.pos{color:#6ee7b7}.pnl.neg{color:#f7a6a3}
 
     /* Archive */
     .archive-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
@@ -152,33 +108,42 @@
     .m-count{font-size:11px;color:#9fb3d9;margin-left:6px}
     .archive-stats{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0}
     .archive-list{max-height:520px;overflow:auto;display:flex;flex-direction:column;gap:10px}
-    .hint{color:#9fb3d9;font-size:12px;margin-top:6px}
-
-    /* Tiny toast */
-    .toast{position:fixed;bottom:20px;right:20px;background:#0e2041;border:1px solid var(--border);color:#e7eefc;border-radius:12px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.3);opacity:0;transform:translateY(8px);transition:all .25s}
+    .toast{position:fixed;bottom:20px;right:20px;background:#0e2041;border:1px solid var(--border);color:#e7eefc;border-radius:12px;padding:12px 14px;opacity:0;transform:translateY(8px);transition:all .25s}
     .toast.show{opacity:1;transform:none}
   </style>
 </head>
 <body>
-  <div class="wrap">
+  <!-- AUTH GATE -->
+  <div id="authGate">
+    <h2 style="margin:0 0 10px">Sign in</h2>
+    <div id="authError" style="color:#ff9b9b;margin-bottom:8px;display:none"></div>
+    <label>Email</label>
+    <input type="email" id="authEmail" placeholder="you@example.com">
+    <label style="margin-top:8px">Password</label>
+    <input type="password" id="authPass" placeholder="••••••••">
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button id="btnLogin" class="btn primary">Login</button>
+      <button id="btnRegister" class="btn ghost">Create account</button>
+    </div>
+  </div>
 
-    <!-- TOP BAR -->
+  <!-- APP -->
+  <div class="wrap" style="display:none">
     <div class="topbar">
       <div class="brand">
         <h1>Perp Trading Calculator</h1>
         <div class="desc">Position size, Live tracking, TPs, History & Archive</div>
       </div>
       <div class="top-actions">
+        <div class="plan-badge" id="planBadge">Plan: Free</div>
         <button class="btn archive" id="openArchive">Archive</button>
+        <button class="btn ghost" id="openProfile">Profile</button>
       </div>
     </div>
 
-    <!-- LIVE SECTION -->
+    <!-- LIVE -->
     <div class="live-area">
-      <div class="live-head">
-        <div class="live-dot"></div>
-        <div class="title">Live</div>
-      </div>
+      <div class="live-head"><div class="live-dot"></div><div>Live</div></div>
       <div class="live-list" id="liveList"></div>
     </div>
 
@@ -234,9 +199,7 @@
             <div class="kpi">
               <div class="box">
                 <div class="title">Position size</div>
-                <div class="value">
-                  <span id="posBTC">-</span> BTC &nbsp; • &nbsp; <span id="posUSDT">-</span> USDT
-                </div>
+                <div class="value"><span id="posBTC">-</span> BTC • <span id="posUSDT">-</span> USDT</div>
               </div>
               <div class="box">
                 <div class="title">Required leverage</div>
@@ -249,25 +212,16 @@
         </div>
       </div>
 
-      <!-- RIGHT: History + Live Stats -->
+      <!-- RIGHT: History + Stats -->
       <div class="card">
         <div class="inner">
           <div class="hist-header">
             <div class="hist-title">Calculation History</div>
             <div class="hist-controls">
-              <div class="stat">
-                <span class="label">SR</span>
-                <span class="value sr" id="srStat">—</span>
-              </div>
-              <div class="stat">
-                <span class="label">Total P/L</span>
-                <span class="value pl zero" id="plStat">0.00</span>
-              </div>
-              <div class="stat">
-                <span class="label">Total Fees</span>
-                <span class="value fees" id="feesStat">0.00</span>
-              </div>
-              <button class="btn archive" id="exportBtn" title="Move all History to Archive">Export</button>
+              <div class="stat"><span class="label">SR</span> <span class="value sr" id="srStat">—</span></div>
+              <div class="stat"><span class="label">Total P/L</span> <span class="value pl zero" id="plStat">0.00</span></div>
+              <div class="stat"><span class="label">Total Fees</span> <span class="value fees" id="feesStat">0.00</span></div>
+              <button class="btn archive" id="exportBtn">Export</button>
             </div>
           </div>
           <ul class="hist-list" id="historyList"></ul>
@@ -276,8 +230,34 @@
     </div>
   </div>
 
-  <!-- Modals -->
-  <!-- Pair -->
+  <!-- Profile Modal -->
+  <div class="modal" id="profileModal" aria-hidden="true">
+    <div class="modal-card"><div class="inner">
+      <h3 style="margin:0 0 12px">Account</h3>
+      <div id="accountEmail" class="muted" style="margin-bottom:10px">—</div>
+      <div class="hist-item" style="margin-bottom:10px">
+        <div class="muted"><b>Status:</b> <span id="subStatus">Free</span></div>
+        <div class="muted"><b>Valid until:</b> <span id="subUntil">—</span></div>
+      </div>
+      <label for="redeemKey">Enter your authentication key</label>
+      <input id="redeemKey" placeholder="KEY-XXXX-XXXX-XXXX">
+      <div class="modal-actions" style="justify-content:flex-start">
+        <button class="btn primary" id="btnRedeem">Redeem</button>
+        <div id="redeemMsg" class="muted" style="margin-left:8px"></div>
+      </div>
+      <div class="separator"></div>
+      <div class="muted">
+        Don’t have an authentication key?
+        Contact <a href="https://t.me/alwkeb" target="_blank">@alwkeb</a> on Telegram to get yours.
+      </div>
+      <div class="modal-actions">
+        <button class="btn ghost" id="btnLogout">Log out</button>
+        <button class="btn cancel" id="closeProfile">Close</button>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- Pair Modal -->
   <div class="modal" id="pairModal" aria-hidden="true">
     <div class="modal-card"><div class="inner">
       <h3 style="margin:0 0 12px">Select pair</h3>
@@ -294,7 +274,7 @@
     </div></div>
   </div>
 
-  <!-- Close Live -->
+  <!-- Close Live Modal -->
   <div class="modal" id="closeModal" aria-hidden="true">
     <div class="modal-card"><div class="inner">
       <h3 style="margin:0 0 12px">Close Live trade</h3>
@@ -316,8 +296,7 @@
       <div class="separator"></div>
       <div class="muted" id="grossLine"></div>
       <div class="muted" style="margin-top:6px">
-        <b>Estimated fees</b> (Gross − Net) :
-        <span id="feesCalc" class="pnl">—</span>
+        <b>Estimated fees</b> (Gross − Net) : <span id="feesCalc" class="pnl">—</span>
       </div>
       <div class="modal-actions">
         <button class="btn cancel" id="cancelClose">Close</button>
@@ -326,7 +305,7 @@
     </div></div>
   </div>
 
-  <!-- Edit Live -->
+  <!-- Edit Live Modal -->
   <div class="modal" id="editLiveModal" aria-hidden="true">
     <div class="modal-card"><div class="inner">
       <h3 style="margin:0 0 12px">Edit Live trade</h3>
@@ -347,7 +326,7 @@
     </div></div>
   </div>
 
-  <!-- TPs Live -->
+  <!-- TP Modal (edit/apply) -->
   <div class="modal" id="tpModal" aria-hidden="true">
     <div class="modal-card"><div class="inner">
       <h3 style="margin:0 0 12px">Partial Take-Profits (TPs)</h3>
@@ -371,14 +350,12 @@
     </div></div>
   </div>
 
-  <!-- TPs View -->
+  <!-- TP View Modal (history/archive view only) -->
   <div class="modal" id="tpViewModal" aria-hidden="true">
     <div class="modal-card"><div class="inner">
       <h3 style="margin:0 0 12px">Partial TPs (view only)</h3>
       <div id="tpViewList"></div>
-      <div class="modal-actions">
-        <button class="btn cancel" id="closeTpView">Close</button>
-      </div>
+      <div class="modal-actions"><button class="btn cancel" id="closeTpView">Close</button></div>
     </div></div>
   </div>
 
@@ -394,7 +371,7 @@
     </div></div>
   </div>
 
-  <!-- Archive -->
+  <!-- Archive Modal -->
   <div class="modal" id="archiveModal" aria-hidden="true">
     <div class="modal-card"><div class="inner">
       <div class="archive-head">
@@ -416,7 +393,7 @@
     </div></div>
   </div>
 
-  <!-- Archive deletion flow -->
+  <!-- Archive delete flow -->
   <div class="modal" id="archDel1" aria-hidden="true">
     <div class="modal-card"><div class="inner">
       <h3 style="margin:0 0 12px">Delete this trade?</h3>
@@ -440,49 +417,136 @@
   <div class="modal" id="archDelOk" aria-hidden="true">
     <div class="modal-card"><div class="inner">
       <h3 style="margin:0 0 12px">Trade successfully deleted</h3>
-      <div class="modal-actions">
-        <button class="btn primary" id="archDelOkClose">Close</button>
-      </div>
+      <div class="modal-actions"><button class="btn primary" id="archDelOkClose">Close</button></div>
     </div></div>
   </div>
 
-  <!-- Toast -->
   <div class="toast" id="toast"></div>
 
+  <!-- Firebase (Step 7) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script>
+    /* Replace with your Web App config from Firebase Console (</> Add app) */
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db   = firebase.firestore();
+  </script>
+
+  <!-- App Logic -->
+  <script>
+    /* ---------------- Utils & Storage ---------------- */
     const el = id => document.getElementById(id);
-    const PAIRS_KEY   = "savedPairs";
-    const TRADES_KEY  = "savedTrades_v2";
-    const LIVE_KEY    = "liveTrades_v1";
-    const ARCHIVE_KEY = "archivedTrades_v1";
+    const toast = (m)=>{ const t=el("toast"); t.textContent=m; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),1600); };
+    function fmt(n,d=2){ const num=Number(n); if(!isFinite(num)) return "-"; return num.toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d}); }
+    const TRADES_KEY="savedTrades_v2", LIVE_KEY="liveTrades_v1", ARCHIVE_KEY="archivedTrades_v1", PAIRS_KEY="savedPairs";
 
-    let currentCalc = null;
-    let liveToAdd    = null;
-    let closingLiveId = null;
-    let editingLiveId = null;
-    let tpLiveId = null;
-    let archDeleteId = null;
-    let archViewState = { year: null, month: null };
+    const Cloud = { uid:null, docRef:null, _timer:null,
+      pushLocalToCloud(){
+        if(!this.docRef) return;
+        clearTimeout(this._timer);
+        this._timer=setTimeout(async ()=>{
+          const payload={
+            pairs: JSON.parse(localStorage.getItem(PAIRS_KEY) || "[]"),
+            live: JSON.parse(localStorage.getItem(LIVE_KEY) || "[]"),
+            trades: JSON.parse(localStorage.getItem(TRADES_KEY) || "[]"),
+            archive: JSON.parse(localStorage.getItem(ARCHIVE_KEY) || "[]"),
+            updatedAt: Date.now()
+          };
+          await this.docRef.set(payload,{merge:true});
+        },250);
+      }
+    };
+    const _setItem = localStorage.setItem.bind(localStorage);
+    localStorage.setItem = function(k,v){ _setItem(k,v);
+      if([PAIRS_KEY,LIVE_KEY,TRADES_KEY,ARCHIVE_KEY].includes(k) && Cloud.docRef){ Cloud.pushLocalToCloud(); }
+    };
+    const getLives=()=>JSON.parse(localStorage.getItem(LIVE_KEY)||"[]");
+    const setLives=(a)=>localStorage.setItem(LIVE_KEY,JSON.stringify(a));
+    const getTrades=()=>JSON.parse(localStorage.getItem(TRADES_KEY)||"[]");
+    const setTrades=(a)=>localStorage.setItem(TRADES_KEY,JSON.stringify(a));
+    const getArchive=()=>JSON.parse(localStorage.getItem(ARCHIVE_KEY)||"[]");
+    const setArchive=(a)=>localStorage.setItem(ARCHIVE_KEY,JSON.stringify(a));
 
-    function fmt(n, d=2){
-      const num = Number(n);
-      if(!isFinite(num)) return "-";
-      return num.toLocaleString(undefined,{minimumFractionDigits:d, maximumFractionDigits:d});
-    }
     function nowIso(){ return new Date().toISOString(); }
-    function toast(msg){
-      const t = el("toast"); t.textContent = msg; t.classList.add("show");
-      setTimeout(()=> t.classList.remove("show"), 1600);
+    function monthNames(){ return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; }
+    function diffToDHm(startIso, endIso){
+      const s=new Date(startIso), e=new Date(endIso); let ms=Math.max(0,e-s);
+      const days=Math.floor(ms/86400000); ms-=days*86400000;
+      const h=Math.floor(ms/3600000); ms-=h*3600000;
+      const m=Math.floor(ms/60000);
+      return `${days}d ${h}h ${m}m`;
     }
-    const getLives   = ()=> JSON.parse(localStorage.getItem(LIVE_KEY)    || "[]");
-    const setLives   = (a)=> localStorage.setItem(LIVE_KEY, JSON.stringify(a));
-    const getTrades  = ()=> JSON.parse(localStorage.getItem(TRADES_KEY)  || "[]");
-    const setTrades  = (a)=> localStorage.setItem(TRADES_KEY, JSON.stringify(a));
-    const getArchive = ()=> JSON.parse(localStorage.getItem(ARCHIVE_KEY) || "[]");
-    const setArchive = (a)=> localStorage.setItem(ARCHIVE_KEY, JSON.stringify(a));
 
-    function showModal(m, show){ m.classList.toggle("open", !!show); m.setAttribute("aria-hidden", show? "false":"true"); }
+    /* ---------------- Auth Gate ---------------- */
+    const gate = el('authGate'), appWrap=document.querySelector('.wrap'), errBox=el('authError');
+    const showAuth=(b)=>{ gate.style.display=b?'block':'none'; appWrap.style.display=b?'none':'block'; };
+    el('btnLogin').onclick = async ()=>{
+      errBox.style.display='none';
+      try{ await auth.signInWithEmailAndPassword(el('authEmail').value.trim(), el('authPass').value); }
+      catch(e){ errBox.textContent=e.message; errBox.style.display='block'; }
+    };
+    el('btnRegister').onclick = async ()=>{
+      errBox.style.display='none';
+      try{ await auth.createUserWithEmailAndPassword(el('authEmail').value.trim(), el('authPass').value); }
+      catch(e){ errBox.textContent=e.message; errBox.style.display='block'; }
+    };
 
+    /* ---------------- Plan gating ---------------- */
+    let isPro=false, validUntil=null, freeCalcCount=0;
+    function setPlanBadge(){ el('planBadge').textContent = `Plan: ${isPro? 'Pro' : 'Free'}${isPro && validUntil ? ` (until ${validUntil.toLocaleDateString()})` : ''}`; }
+    async function loadSubscription(uid){
+      const ref=db.doc(`users/${uid}/subscription/current`); const s=await ref.get();
+      isPro=false; validUntil=null;
+      if(s.exists){ const d=s.data(); if(d.validUntil && d.validUntil.toDate()>new Date()){ isPro=true; validUntil=d.validUntil.toDate(); } }
+      updateUiForPlan();
+      el('subStatus') && (el('subStatus').textContent = isPro?'Pro':'Free');
+      el('subUntil') && (el('subUntil').textContent  = isPro? validUntil.toLocaleString() : '—');
+      setPlanBadge();
+    }
+    async function loadMeta(uid){
+      const ref=db.doc(`users/${uid}/meta/limits`); const s=await ref.get();
+      freeCalcCount=(s.exists && typeof s.data().calcCount==='number')? s.data().calcCount:0;
+    }
+    async function incCalcCount(uid){
+      const ref=db.doc(`users/${uid}/meta/limits`);
+      await db.runTransaction(async tx=>{
+        const s=await tx.get(ref); const cur=s.exists?(s.data().calcCount||0):0;
+        tx.set(ref,{calcCount:cur+1},{merge:true});
+      });
+      freeCalcCount+=1;
+    }
+    function updateUiForPlan(){
+      ['saveBtn','liveBtn','exportBtn','openArchive'].forEach(id=>{ const b=el(id); if(!b) return; b.disabled=!isPro; });
+    }
+
+    /* ---------------- Profile modal ---------------- */
+    const profileModal=el('profileModal');
+    el('openProfile').onclick=()=> profileModal.classList.add('open');
+    el('closeProfile').onclick=()=> profileModal.classList.remove('open');
+    el('btnLogout').onclick=()=> auth.signOut();
+    el('btnRedeem').onclick = async ()=>{
+      const key=(el('redeemKey').value||'').trim(); const msg=el('redeemMsg'); msg.textContent='Checking...';
+      try{
+        const user=auth.currentUser; const idToken=await user.getIdToken();
+        const res=await fetch('/.netlify/functions/redeem',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+idToken},body:JSON.stringify({key})});
+        const data=await res.json();
+        if(!res.ok){ msg.textContent=data.error||'Invalid key.'; return; }
+        msg.textContent='Key applied.';
+        await loadSubscription(user.uid); updateUiForPlan(); setPlanBadge();
+      }catch(e){ msg.textContent=e.message||'Redeem failed.'; }
+    };
+
+    /* ---------------- Pairs ---------------- */
     function loadPairs(){
       let pairs = JSON.parse(localStorage.getItem(PAIRS_KEY) || "null");
       if(!Array.isArray(pairs) || pairs.length===0) pairs = ["BTCUSDT","ETHUSDT","Other…"];
@@ -492,39 +556,39 @@
       pairs.forEach(p=>{ const o=document.createElement("option"); o.value=p; o.textContent=p; sel.appendChild(o); });
     }
 
-    function monthNames(){ return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; }
+    /* ---------------- Calculator ---------------- */
+    let currentCalc=null, liveToAdd=null, closingLiveId=null, editingLiveId=null, tpLiveId=null;
 
-    /* Calculator */
-    el("calcBtn").addEventListener("click", ()=>{
-      const wallet = parseFloat(el("wallet").value);
-      const riskPct = parseFloat(el("risk").value);
-      const marginPct = parseFloat(el("margin").value);
-      const entry = parseFloat(el("entry").value);
-      const stop  = parseFloat(el("stop").value);
+    el("calcBtn").addEventListener("click", async ()=>{
+      const user=auth.currentUser; if(!user){ alert("Please login."); return; }
+      if(!isPro && freeCalcCount>=5){ alert("Free tier limit reached (5 calculations). Enter an authentication key in Profile to unlock full access."); return; }
+
+      const wallet=parseFloat(el('wallet').value), riskPct=parseFloat(el('risk').value),
+            marginPct=parseFloat(el('margin').value), entry=parseFloat(el('entry').value), stop=parseFloat(el('stop').value);
 
       el("results").hidden = true; el("saveBtn").hidden = true; el("liveBtn").hidden = true;
 
       if([wallet,riskPct,marginPct,entry,stop].some(v=>!isFinite(v)) || wallet<=0 || entry<=0 || stop<=0 || marginPct<=0){
         alert("Please fill all fields with valid values."); return;
       }
-      const riskUSDT   = wallet * (riskPct/100);
-      const priceDiff  = Math.abs(entry - stop);
-      if(priceDiff === 0){ alert("Entry and stop must be different."); return; }
-      const qtyBTC     = riskUSDT / priceDiff;
-      const marginUSDT = wallet * (marginPct/100);
+      const riskUSDT = wallet*(riskPct/100);
+      const priceDiff = Math.abs(entry - stop); if(priceDiff===0){ alert("Entry and stop must be different."); return; }
+      const qtyBTC = riskUSDT / priceDiff;
+      const marginUSDT = wallet*(marginPct/100);
       const notionalUSDT = entry * qtyBTC;
-      let lev = notionalUSDT / marginUSDT;
-      let levRounded = Math.round(lev); if(levRounded<1) levRounded=1;
+      let lev = Math.round(notionalUSDT / marginUSDT); if(lev<1) lev=1;
 
-      el("riskUSDT").textContent = fmt(riskUSDT,2);
-      el("marginUSDT").textContent = fmt(marginUSDT,2);
-      el("posBTC").textContent = fmt(qtyBTC,6);
-      el("posUSDT").textContent = fmt(notionalUSDT,2);
-      el("lev").textContent = levRounded.toString();
-      el("results").hidden = false; el("saveBtn").hidden = false; el("liveBtn").hidden = false;
+      el('riskUSDT').textContent=fmt(riskUSDT,2);
+      el('marginUSDT').textContent=fmt(marginUSDT,2);
+      el('posBTC').textContent=fmt(qtyBTC,6);
+      el('posUSDT').textContent=fmt(notionalUSDT,2);
+      el('lev').textContent=String(lev);
+      el('results').hidden=false;
+      el('saveBtn').hidden=false;
+      el('liveBtn').hidden=false;
 
       currentCalc = {
-        id: Date.now().toString(36) + Math.random().toString(36).slice(2,8),
+        id: Date.now().toString(36)+Math.random().toString(36).slice(2,8),
         direction: "Long",
         wallet: Number(wallet.toFixed(2)),
         riskPercent: Number(riskPct),
@@ -535,25 +599,33 @@
         quantityBTC: Number(qtyBTC.toFixed(6)),
         notionalUSDT: Number(notionalUSDT.toFixed(2)),
         marginAmount: Number(marginUSDT.toFixed(2)),
-        leverage: levRounded,
+        leverage: lev,
         ts: nowIso(),
         pair: null,
         outcome:null, closePrice:null, netProfit:null, totalFees:null,
         open_ts:null, close_ts:null, duration:null,
         tpList:[], tpSecured:0, tpPct:0
       };
+
+      if(!isPro){ await incCalcCount(user.uid); setPlanBadge(); }
     });
+
     el("clearBtn").addEventListener("click", ()=>{ ["wallet","risk","margin","entry","stop"].forEach(id=>el(id).value=""); el("results").hidden=true; el("saveBtn").hidden=true; el("liveBtn").hidden=true; currentCalc=null; });
 
-    /* Save / Live */
+    // Save & Live require PRO
     el("saveBtn").addEventListener("click", ()=>{
-      if(!currentCalc) return; liveToAdd = { mode:"save" }; showModal(el("pairModal"), true); loadPairs();
+      if(!isPro){ alert("Pro only. Redeem key in Profile."); return; }
+      if(!currentCalc) return; liveToAdd = { mode:"save" }; loadPairs(); showModal(el("pairModal"), true);
     });
     el("liveBtn").addEventListener("click", ()=>{
+      if(!isPro){ alert("Pro only. Redeem key in Profile."); return; }
       if(!currentCalc) return;
       if(getLives().length >= 3){ alert("Limit reached: 3 Live trades. Please close one to add another."); return; }
-      liveToAdd = { mode:"live" }; showModal(el("pairModal"), true); loadPairs();
+      liveToAdd = { mode:"live" }; loadPairs(); showModal(el("pairModal"), true);
     });
+
+    /* ---------------- Pair modal ---------------- */
+    function showModal(m, show){ m.classList.toggle("open", !!show); m.setAttribute("aria-hidden", show? "false":"true"); }
     el("pairSelect").addEventListener("change", (e)=>{
       const v = e.target.value; el("customPairWrap").style.display = (v==="Other…")? "block":"none"; if(v==="Other…") el("customPair").focus();
     });
@@ -586,7 +658,7 @@
       liveToAdd = null;
     });
 
-    /* Close Live */
+    /* ---------------- Close Live ---------------- */
     function computeGrossPnl(t, closePrice){ return (closePrice - t.entryPrice) * t.quantityBTC; } // long-only
     function recomputeClosePreview(){
       const t = getLives().find(x=>x.id===closingLiveId);
@@ -640,23 +712,12 @@
       showModal(el("closeModal"), false);
       renderLive(); renderHistory();
       toast("Trade saved to History");
-      // Reset modal inputs for next time
-      el("optW").checked=false; el("optL").checked=false;
-      el("closePrice").value=""; el("netAmount").value="";
+      el("optW").checked=false; el("optL").checked=false; el("closePrice").value=""; el("netAmount").value="";
       el("feesCalc").textContent="—"; el("grossLine").textContent="";
       closingLiveId = null;
     });
 
-    function diffToDHm(startIso, endIso){
-      const s=new Date(startIso), e=new Date(endIso);
-      let ms = Math.max(0, e - s);
-      const days = Math.floor(ms / (24*3600e3)); ms -= days*24*3600e3;
-      const hours= Math.floor(ms / 3600e3); ms -= hours*3600e3;
-      const mins = Math.floor(ms / 60e3);
-      return `${days}d ${hours}h ${mins}m`;
-    }
-
-    /* Edit Live */
+    /* ---------------- Edit Live ---------------- */
     el("saveEdit").addEventListener("click", ()=>{
       const lives = getLives();
       const idx = lives.findIndex(x=>x.id===editingLiveId);
@@ -664,9 +725,7 @@
       const t = lives[idx];
       const newEntry = parseFloat(el("editEntry").value);
       const newStop  = parseFloat(el("editStop").value);
-      if(!isFinite(newEntry) || newEntry<=0 || !isFinite(newStop) || newStop<=0){
-        alert("Please enter valid Entry and Stop values."); return;
-      }
+      if(!isFinite(newEntry) || newEntry<=0 || !isFinite(newStop) || newStop<=0){ alert("Please enter valid Entry and Stop values."); return; }
       t.entryPrice = Number(newEntry.toFixed(2));
       t.stopPrice  = Number(newStop.toFixed(2));
       t.notionalUSDT = Number((t.entryPrice * t.quantityBTC).toFixed(2));
@@ -677,7 +736,7 @@
     });
     el("cancelEdit").addEventListener("click", ()=> showModal(el("editLiveModal"), false));
 
-    /* TPs (partial takes) */
+    /* ---------------- TPs ---------------- */
     function renderTpModal(){
       const t = getLives().find(x=>x.id===tpLiveId); if(!t) return;
       const remain = Math.max(0, 100 - (t.tpPct || 0));
@@ -750,7 +809,7 @@
       renderTpModal(); renderLive(); toast("TP applied");
     });
 
-    /* Render Live */
+    /* ---------------- Render Live ---------------- */
     function renderLive(){
       const box = el("liveList"); box.innerHTML = "";
       const lives = getLives();
@@ -759,7 +818,6 @@
       }
       lives.forEach(t=>{
         const card = document.createElement("div"); card.className = "live-card";
-
         const top = document.createElement("div"); top.className = "live-card-top";
         const left = document.createElement("div"); left.className = "live-id";
         left.innerHTML = `<span class="live-dot" style="width:10px;height:10px"></span><span class="badge">${t.pair} ${t.direction}</span>`;
@@ -789,7 +847,7 @@
       });
     }
 
-    /* Stats */
+    /* ---------------- History + Stats ---------------- */
     function renderStats(trades){
       const srEl = el("srStat"), plEl = el("plStat"), feesEl = el("feesStat");
       let totalPL = 0, totalFees = 0, wins = 0, losses = 0;
@@ -804,8 +862,6 @@
       if(totalPL > 0) plEl.classList.add("pos"); else if(totalPL < 0) plEl.classList.add("neg"); else plEl.classList.add("zero");
       feesEl.textContent = fmt(totalFees,2);
     }
-
-    /* History */
     function renderHistory(){
       const ul = el("historyList"); ul.innerHTML = "";
       const trades = getTrades();
@@ -859,9 +915,10 @@
       });
     }
 
-    /* Export History -> Archive */
+    /* ---------------- Export → Archive ---------------- */
     function showExportModal(show){ showModal(el("exportModal"), show); }
     el("exportBtn").addEventListener("click", ()=>{
+      if(!isPro){ alert("Pro only. Redeem key in Profile."); return; }
       const trades = getTrades();
       if(!trades.length){ alert("No trades in History to export."); return; }
       showExportModal(true);
@@ -872,44 +929,46 @@
       arch.push(...trades); setArchive(arch); setTrades([]); renderHistory(); showExportModal(false); toast("Exported to Archive");
     });
 
-    /* Archive view */
+    /* ---------------- Archive browser ---------------- */
+    const archState = { year:null, month:null, deleteId:null };
     function showArchiveModal(show){
+      if(!isPro){ alert("Pro only. Redeem key in Profile."); return; }
       showModal(el("archiveModal"), show);
       if(show){ buildArchiveYears(); buildMonthGrid(); renderArchiveMonth(); }
-      else { archViewState = { year:null, month:null }; el("archiveList").innerHTML = ""; el("archiveStats").style.display="none"; }
+      else { archState.year=null; archState.month=null; el("archiveList").innerHTML=""; el("archiveStats").style.display="none"; }
     }
     el("openArchive").addEventListener("click", ()=> showArchiveModal(true));
     el("closeArchive").addEventListener("click", ()=> showArchiveModal(false));
-
     function buildArchiveYears(){
       const arch = getArchive();
       const years = [...new Set(arch.map(t => new Date(t.close_ts || t.ts).getFullYear()))].filter(y=>!isNaN(y)).sort((a,b)=>b-a);
       const sel = el("yearSelect"); sel.innerHTML = "";
-      if(years.length===0){ const opt=document.createElement("option"); opt.value=""; opt.textContent="—"; sel.appendChild(opt); archViewState.year=null; return; }
+      if(years.length===0){ const opt=document.createElement("option"); opt.value=""; opt.textContent="—"; sel.appendChild(opt); archState.year=null; return; }
       years.forEach(y=>{ const opt=document.createElement("option"); opt.value=String(y); opt.textContent=String(y); sel.appendChild(opt); });
-      archViewState.year = archViewState.year || String(years[0]); sel.value = archViewState.year;
-      sel.onchange = ()=>{ archViewState.year = sel.value; buildMonthGrid(); renderArchiveMonth(); };
+      archState.year = archState.year || String(years[0]); sel.value = archState.year;
+      sel.onchange = ()=>{ archState.year = sel.value; buildMonthGrid(); renderArchiveMonth(); };
     }
+    function monthNames(){ return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; }
     function buildMonthGrid(){
       const grid = el("monthGrid"); grid.innerHTML = "";
-      const year = archViewState.year;
+      const year = archState.year;
       const arch = getArchive().filter(t => new Date(t.close_ts || t.ts).getFullYear() == year);
       const counts = Array(12).fill(0);
       arch.forEach(t=> counts[new Date(t.close_ts || t.ts).getMonth()]++);
       monthNames().forEach((name, i)=>{
         const b = document.createElement("button"); b.className="m-btn"; b.textContent = name;
-        if(!counts[i]) b.disabled = true;
-        const span = document.createElement("span"); span.className="m-count"; span.textContent = counts[i] ? `(${counts[i]})` : "";
+        const span = document.createElement("span"); span.className="m-count"; span.textContent = counts[i] ? ` (${counts[i]})` : "";
         b.appendChild(span);
-        if(archViewState.month===i) b.classList.add("active");
-        b.addEventListener("click", ()=>{ archViewState.month = i; renderArchiveMonth(); });
+        if(!counts[i]) b.disabled = true;
+        if(archState.month===i) b.classList.add("active");
+        b.addEventListener("click", ()=>{ archState.month = i; renderArchiveMonth(); buildMonthGrid(); });
         grid.appendChild(b);
       });
     }
     function renderArchiveMonth(){
       const list = el("archiveList"); list.innerHTML = "";
       const statsBox = el("archiveStats"); statsBox.style.display="none";
-      const year = archViewState.year, month = archViewState.month;
+      const year = archState.year, month = archState.month;
       if(year===null || month===null){ list.innerHTML = `<div class="muted">Pick a month.</div>`; return; }
       const arch = getArchive().filter(t=>{
         const d = new Date(t.close_ts || t.ts); return d.getFullYear() == year && d.getMonth() == month;
@@ -947,7 +1006,7 @@
           right.appendChild(viewBtn);
         }
         const del=document.createElement("button"); del.className="trash"; del.textContent="🗑️";
-        del.addEventListener("click", ()=>{ archDeleteId = trade.id; showModal(el("archDel1"), true); });
+        del.addEventListener("click", ()=>{ archState.deleteId = trade.id; showModal(el("archDel1"), true); });
         right.appendChild(del);
         header.appendChild(left); header.appendChild(right); li.appendChild(header);
 
@@ -965,27 +1024,53 @@
       });
     }
 
-    // Archive deletion flow
+    // Archive delete flow
     el("archDel1Cancel").addEventListener("click", ()=> showModal(el("archDel1"), false));
     el("archDel1Yes").addEventListener("click", ()=>{ showModal(el("archDel1"), false); showModal(el("archDel2"), true); });
-    el("archDel2Cancel").addEventListener("click", ()=>{ archDeleteId=null; showModal(el("archDel2"), false); });
+    el("archDel2Cancel").addEventListener("click", ()=>{ archState.deleteId=null; showModal(el("archDel2"), false); });
     el("archDel2Delete").addEventListener("click", ()=>{
-      if(!archDeleteId){ showModal(el("archDel2"), false); return; }
-      let arch = getArchive(); arch = arch.filter(t=>t.id!==archDeleteId); setArchive(arch); archDeleteId = null;
+      if(!archState.deleteId){ showModal(el("archDel2"), false); return; }
+      let arch = getArchive(); arch = arch.filter(t=>t.id!==archState.deleteId); setArchive(arch); archState.deleteId = null;
       showModal(el("archDel2"), false); showModal(el("archDelOk"), true);
       buildArchiveYears(); buildMonthGrid(); renderArchiveMonth();
     });
     el("archDelOkClose").addEventListener("click", ()=> showModal(el("archDelOk"), false));
-
-    /* TP view modal close */
     el("closeTpView").addEventListener("click", ()=> showModal(el("tpViewModal"), false));
 
-    /* Live render + History render */
-    function renderAll(){ renderLive(); renderHistory(); }
-    document.addEventListener("DOMContentLoaded", ()=>{ loadPairs(); renderAll(); });
+    /* ---------------- Auth state + Cloud sync ---------------- */
+    auth.onAuthStateChanged(async (user)=>{
+      if(!user){ showAuth(true); return; }
+      showAuth(false);
+      el('accountEmail') && (el('accountEmail').textContent = user.email||user.uid);
+      setPlanBadge();
 
-    /* Helpers for Close modal */
-    function diff(a,b){ return Math.abs(a-b); }
+      Cloud.uid=user.uid;
+      Cloud.docRef=db.doc(`users/${user.uid}/state/app`);
+      const snap=await Cloud.docRef.get();
+      if(!snap.exists){
+        await Cloud.docRef.set({pairs:[],live:[],trades:[],archive:[],updatedAt:Date.now()});
+      }else{
+        const d=snap.data();
+        localStorage.setItem(PAIRS_KEY,JSON.stringify(d.pairs||[]));
+        localStorage.setItem(LIVE_KEY,JSON.stringify(d.live||[]));
+        localStorage.setItem(TRADES_KEY,JSON.stringify(d.trades||[]));
+        localStorage.setItem(ARCHIVE_KEY,JSON.stringify(d.archive||[]));
+      }
+      Cloud.docRef.onSnapshot(s=>{
+        if(!s.exists) return; const d=s.data();
+        localStorage.setItem(PAIRS_KEY,JSON.stringify(d.pairs||[]));
+        localStorage.setItem(LIVE_KEY,JSON.stringify(d.live||[]));
+        localStorage.setItem(TRADES_KEY,JSON.stringify(d.trades||[]));
+        localStorage.setItem(ARCHIVE_KEY,JSON.stringify(d.archive||[]));
+        renderLive(); renderHistory();
+      });
+
+      await loadMeta(user.uid);
+      await loadSubscription(user.uid);
+      updateUiForPlan();
+      renderLive(); renderHistory();
+    });
+
   </script>
 </body>
 </html>
