@@ -36,10 +36,16 @@ export async function handler(event) {
       else { await send(chatId, 'Usage: /newkey 30d OR /newkey perm'); return ok(); }
 
       const key = genKey();
-      await db.collection('keys').doc(key).set({
-        type: keyType, durationDays, createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        createdBy: ADMIN_ID, revoked: false
-      });
+      const payload = {
+  type,
+  createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  createdBy: ADMIN_ID,
+  revoked: false
+};
+if (typeof durationDays === 'number') {
+  payload.durationDays = durationDays;
+}
+await db.collection('keys').doc(key).set(payload);
       await send(chatId, `✅ Key created:\n${key}`);
       return ok();
     }
