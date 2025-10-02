@@ -428,7 +428,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script>
-    let userDoc = null; // Firestore reference for the logged-in user
     /* Replace with your Web App config from Firebase Console (</> Add app) */
     const firebaseConfig = {
       apiKey: "AIzaSyAWT2shwDCt0FJP9MlqhMEDdKAEK9D0zng",
@@ -1039,25 +1038,24 @@
     el("closeTpView").addEventListener("click", ()=> showModal(el("tpViewModal"), false));
 
     /* ---------------- Auth state + Cloud sync ---------------- */
-    function syncToCloud() {
-  if (!userDoc) return;  // only if logged in
-  userDoc.set({
-    trades: JSON.parse(localStorage.getItem("savedTrades_v2") || "[]"),
-    live: JSON.parse(localStorage.getItem("liveTrades_v1") || "[]"),
-    archive: JSON.parse(localStorage.getItem("archivedTrades_v1") || "[]"),
-    pairs: JSON.parse(localStorage.getItem("savedPairs") || "[]"),
-    updatedAt: new Date()
-  }, { merge: true });
-}
+    auth.onAuthStateChanged(async (user)=>{
+      if(!user){ showAuth(true); return; }
+      showAuth(false);
+      el('accountEmail') && (el('accountEmail').textContent = user.email||user.uid);
+      setPlanBadge();
 
-const _setTrades = setTrades;
-setTrades = (a) => { _setTrades(a); syncToCloud(); };
-
-const _setLives = setLives;
-setLives = (a) => { _setLives(a); syncToCloud(); };
-
-const _setArchive = setArchive;
-setArchive = (a) => { _setArchive(a); syncToCloud(); };
+      Cloud.uid=user.uid;
+      Cloud.docRef=db.doc(`users/${user.uid}/state/app`);
+      const snap=await Cloud.docRef.get();
+      if(!snap.exists){
+        await Cloud.docRef.set({pairs:[],live:[],trades:[],archive:[],updatedAt:Date.now()});
+      }else{
+        const d=snap.data();
+        localStorage.setItem(PAIRS_KEY,JSON.stringify(d.pairs||[]));
+        localStorage.setItem(LIVE_KEY,JSON.stringify(d.live||[]));
+        localStorage.setItem(TRADES_KEY,JSON.stringify(d.trades||[]));
+        localStorage.setItem(ARCHIVE_KEY,JSON.stringify(d.archive||[]));
+      }
       Cloud.docRef.onSnapshot(s=>{
         if(!s.exists) return; const d=s.data();
         localStorage.setItem(PAIRS_KEY,JSON.stringify(d.pairs||[]));
@@ -1072,6 +1070,17 @@ setArchive = (a) => { _setArchive(a); syncToCloud(); };
       updateUiForPlan();
       renderLive(); renderHistory();
     });
+
+    function syncToCloud() {
+  if (!Cloud.docRef) return;
+  Cloud.docRef.set({
+    pairs: JSON.parse(localStorage.getItem(PAIRS_KEY) || "[]"),
+    live: JSON.parse(localStorage.getItem(LIVE_KEY) || "[]"),
+    trades: JSON.parse(localStorage.getItem(TRADES_KEY) || "[]"),
+    archive: JSON.parse(localStorage.getItem(ARCHIVE_KEY) || "[]"),
+    updatedAt: new Date()
+  }, { merge: true });
+}
 
   </script>
 </body>
