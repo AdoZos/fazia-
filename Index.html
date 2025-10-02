@@ -1083,5 +1083,210 @@
 }
 
   </script>
+
+  <script>
+/* ===================== Firebase Init ===================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyAWT2shwDCt0FJP9MlqhMEDdKAEK9D0zng",
+  authDomain: "fazia3-4afb7.firebaseapp.com",
+  projectId: "fazia3-4afb7",
+  storageBucket: "fazia3-4afb7.firebasestorage.app",
+  messagingSenderId: "569910754779",
+  appId: "1:569910754779:web:36bd28f52913437bccfbfe"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+db.settings({ ignoreUndefinedProperties: true });
+
+/* ===================== Global Keys ===================== */
+const TRADES_KEY="savedTrades_v2",
+      LIVE_KEY="liveTrades_v1",
+      ARCHIVE_KEY="archivedTrades_v1",
+      PAIRS_KEY="savedPairs";
+
+let userDoc=null;
+
+/* ===================== Helpers ===================== */
+const el = id => document.getElementById(id);
+function fmt(n,d=2){ const num=Number(n); if(!isFinite(num)) return "-"; return num.toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d}); }
+function nowIso(){ return new Date().toISOString(); }
+
+/* ===================== Save to Firestore ===================== */
+function saveAllToCloud() {
+  if (!userDoc) return;
+  const payload = {
+    pairs: JSON.parse(localStorage.getItem(PAIRS_KEY) || "[]"),
+    live: JSON.parse(localStorage.getItem(LIVE_KEY) || "[]"),
+    trades: JSON.parse(localStorage.getItem(TRADES_KEY) || "[]"),
+    archive: JSON.parse(localStorage.getItem(ARCHIVE_KEY) || "[]"),
+    updatedAt: Date.now()
+  };
+  userDoc.set(payload, { merge: true });
+}
+
+/* ===================== Local Storage Wraps ===================== */
+const getTrades=()=>JSON.parse(localStorage.getItem(TRADES_KEY)||"[]");
+const setTrades=(a)=>{localStorage.setItem(TRADES_KEY,JSON.stringify(a));saveAllToCloud();};
+
+const getLives=()=>JSON.parse(localStorage.getItem(LIVE_KEY)||"[]");
+const setLives=(a)=>{localStorage.setItem(LIVE_KEY,JSON.stringify(a));saveAllToCloud();};
+
+const getArchive=()=>JSON.parse(localStorage.getItem(ARCHIVE_KEY)||"[]");
+const setArchive=(a)=>{localStorage.setItem(ARCHIVE_KEY,JSON.stringify(a));saveAllToCloud();};
+
+/* ===================== Auth Handling ===================== */
+function showAuth(show){ el("authGate").style.display=show?"block":"none"; document.querySelector(".wrap").style.display=show?"none":"block"; }
+
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){ showAuth(true); return; }
+  showAuth(false);
+
+  el('accountEmail') && (el('accountEmail').textContent = user.email||user.uid);
+
+  userDoc=db.collection("users").doc(user.uid);
+
+  // Load state from Firestore
+  const snap=await userDoc.get();
+  if(snap.exists){
+    const d=snap.data();
+    localStorage.setItem(PAIRS_KEY,JSON.stringify(d.pairs||[]));
+    localStorage.setItem(LIVE_KEY,JSON.stringify(d.live||[]));
+    localStorage.setItem(TRADES_KEY,JSON.stringify(d.trades||[]));
+    localStorage.setItem(ARCHIVE_KEY,JSON.stringify(d.archive||[]));
+  }
+
+  // Auto-update when Firestore changes
+  userDoc.onSnapshot(s=>{
+    if(!s.exists) return;
+    const d=s.data();
+    localStorage.setItem(PAIRS_KEY,JSON.stringify(d.pairs||[]));
+    localStorage.setItem(LIVE_KEY,JSON.stringify(d.live||[]));
+    localStorage.setItem(TRADES_KEY,JSON.stringify(d.trades||[]));
+    localStorage.setItem(ARCHIVE_KEY,JSON.stringify(d.archive||[]));
+    renderLive(); renderHistory();
+  });
+
+  renderLive(); renderHistory();
+});
+
+/* ===================== Calculator ===================== */
+let currentCalc=null;
+
+el("calcBtn").addEventListener("click", ()=>{
+  const wallet=parseFloat(el('wallet').value),
+        riskPct=parseFloat(el('risk').value),
+        marginPct=parseFloat(el('margin').value),
+        entry=parseFloat(el('entry').value),
+        stop=parseFloat(el('stop').value);
+
+  if([wallet,riskPct,marginPct,entry,stop].some(v=>!isFinite(v))||wallet<=0||entry<=0||stop<=0){alert("Invalid inputs");return;}
+
+  const riskUSDT = wallet*(riskPct/100);
+  const diff = Math.abs(entry-stop);
+  const qtyBTC = riskUSDT/diff;
+  const marginUSDT = wallet*(marginPct/100);
+  const notionalUSDT = entry*qtyBTC;
+  let lev=Math.round(notionalUSDT/marginUSDT); if(lev<1) lev=1;
+
+  el("riskUSDT").textContent=fmt(riskUSDT,2);
+  el("marginUSDT").textContent=fmt(marginUSDT,2);
+  el("posBTC").textContent=fmt(qtyBTC,6);
+  el("posUSDT").textContent=fmt(notionalUSDT,2);
+  el("lev").textContent=lev;
+
+  el("results").hidden=false;
+  el("saveBtn").hidden=false;
+  el("liveBtn").hidden=false;
+
+  currentCalc={
+    id:Date.now().toString(36),
+    direction:"Long",
+    wallet:wallet,
+    riskPercent:riskPct,
+    marginPercent:marginPct,
+    entryPrice:entry,
+    stopPrice:stop,
+    riskAmount:riskUSDT,
+    quantityBTC:qtyBTC,
+    notionalUSDT:notionalUSDT,
+    marginAmount:marginUSDT,
+    leverage:lev,
+    ts:nowIso(),
+    pair:"BTCUSDT", // default
+    outcome:null,closePrice:null,netProfit:null,totalFees:null,
+    open_ts:null,close_ts:null,duration:null,
+    tpList:[]
+  };
+});
+
+/* ===================== Save Trade ===================== */
+el("saveBtn").addEventListener("click",()=>{
+  if(!currentCalc) return;
+  const arr=getTrades();
+  arr.push({...currentCalc});
+  setTrades(arr);
+  currentCalc=null;
+  el("saveBtn").hidden=true; el("liveBtn").hidden=true;
+  renderHistory();
+});
+
+/* ===================== Live Trade ===================== */
+el("liveBtn").addEventListener("click",()=>{
+  if(!currentCalc) return;
+  const lives=getLives();
+  if(lives.length>=3){alert("Max 3 live trades");return;}
+  currentCalc.open_ts=nowIso();
+  lives.push({...currentCalc});
+  setLives(lives);
+  currentCalc=null;
+  el("saveBtn").hidden=true; el("liveBtn").hidden=true;
+  renderLive();
+});
+
+/* ===================== Rendering ===================== */
+function renderHistory(){
+  const ul=el("historyList"); ul.innerHTML="";
+  const trades=getTrades();
+  trades.slice().reverse().forEach(t=>{
+    const li=document.createElement("li");
+    li.className="hist-item";
+    li.innerHTML=`
+      <div class="hist-top">
+        <span class="pill">${t.pair} ${t.direction} [${new Date(t.ts).toLocaleString()}]</span>
+      </div>
+      <div class="muted"><b>Entry:</b> ${fmt(t.entryPrice,2)} | <b>Stop:</b> ${fmt(t.stopPrice,2)}</div>
+      <div class="muted"><b>Size:</b> ${fmt(t.quantityBTC,6)} BTC • ${fmt(t.notionalUSDT,2)} USDT</div>
+    `;
+    ul.appendChild(li);
+  });
+}
+
+function renderLive(){
+  const box=el("liveList"); box.innerHTML="";
+  const lives=getLives();
+  lives.forEach(t=>{
+    const div=document.createElement("div");
+    div.className="live-card";
+    div.innerHTML=`
+      <div class="live-card-top">
+        <span class="live-id"><span class="badge">${t.pair} ${t.direction}</span></span>
+        <button class="btn close">Close</button>
+      </div>
+      <div class="live-kv">
+        Entry: ${fmt(t.entryPrice,2)} | Stop: ${fmt(t.stopPrice,2)}<br>
+        Size: ${fmt(t.quantityBTC,6)} BTC • ${fmt(t.notionalUSDT,2)} USDT
+      </div>
+    `;
+    div.querySelector(".close").addEventListener("click",()=>{
+      const lives2=getLives().filter(x=>x.id!==t.id);
+      setLives(lives2);
+      const trades=getTrades(); trades.push({...t,close_ts:nowIso()}); setTrades(trades);
+      renderLive(); renderHistory();
+    });
+    box.appendChild(div);
+  });
+}
+</script>
 </body>
 </html>
